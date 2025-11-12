@@ -1,5 +1,7 @@
 import os
+import json
 from llama_cloud_services import LlamaParse
+from typing import List, Dict
 
 if __name__ == "__main__":
 
@@ -12,8 +14,15 @@ if __name__ == "__main__":
         verbose=True,
         language="en"
     )
-
-    result = parser.parse("LLMs.pdf")
+    file_names:List[str] = [
+        "LLMs.pdf",
+    ]
+    result = parser.parse(file_names)[0]
     text_documents = result.get_text_documents(split_by_page=False)
-    print(type(text_documents))
-    print(f"Text: {text_documents}")
+    print(type(text_documents), len(text_documents))
+    
+    res:Dict[str, str] = {}
+    for file_name, doc in zip(file_names, text_documents):
+        res[file_name] = doc.text
+    
+    print(json.dumps(res, indent=4))
