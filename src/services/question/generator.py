@@ -105,10 +105,21 @@ class QuestionGenerator:
                 explanation=question_data.get("explanation", "")
             )
             
+            # Validate the generated question
+            from src.services.question.validator import QuestionValidator
+            is_valid, validation_errors = QuestionValidator.validate(question)
+            
+            if not is_valid:
+                # If validation fails, log and use fallback
+                print(f"Generated question failed validation: {validation_errors}")
+                return self._generate_fallback_question(topic, subtopic, concept, difficulty)
+            
             return question
             
         except Exception as e:
             # Fallback: generate a simple question
+            # Log error but don't fail - use fallback
+            print(f"Question generation error: {e}, using fallback")
             return self._generate_fallback_question(topic, subtopic, concept, difficulty)
     
     def _generate_fallback_question(
@@ -127,23 +138,49 @@ class QuestionGenerator:
             difficulty: Difficulty level
             
         Returns:
-            Simple MultipleChoiceQuestion
+            Simple MultipleChoiceQuestion with concrete, factual answers
         """
         question_text = f"Which of the following best describes {concept.name}?"
         
+        # Create concrete, factual alternatives based on common programming concepts
+        # These are better than generic placeholders - they're actual concepts students might confuse
+        alternatives = [
+            "A data structure used for storing collections of items",
+            "A control structure that executes code conditionally",
+            "A function that performs mathematical operations",
+            "A variable that holds multiple values",
+            "A loop that repeats code a specific number of times",
+            "A method for organizing related code together",
+            "A type of error handling mechanism",
+            "A way to import external libraries"
+        ]
+        
+        # Select 3 random alternatives that are different from the concept description
+        selected_alternatives = []
+        for alt in alternatives:
+            if alt.lower() != concept.description.lower()[:50]:  # Avoid duplicates
+                selected_alternatives.append(alt)
+                if len(selected_alternatives) >= 3:
+                    break
+        
+        # Ensure we have enough alternatives
+        while len(selected_alternatives) < 3:
+            selected_alternatives.append(f"A programming concept related to {subtopic.lower()}")
+        
         answers = [
             Answer(text=concept.description, is_correct=True),
-            Answer(text="This is not the correct definition", is_correct=False),
-            Answer(text="This is an unrelated concept", is_correct=False),
-            Answer(text="None of the above", is_correct=False)
         ]
+        
+        # Add concrete alternatives
+        for alt in selected_alternatives[:3]:
+            answers.append(Answer(text=alt, is_correct=False))
         
         # Shuffle answers
         random.shuffle(answers)
         
         return MultipleChoiceQuestion(
             question_text=question_text,
-            answers=answers,
+            answers=answers[:4],
             topic=topic,
             subtopic=subtopic,
             concepts=[concept.name],

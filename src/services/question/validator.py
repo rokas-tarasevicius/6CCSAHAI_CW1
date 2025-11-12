@@ -45,6 +45,34 @@ class QuestionValidator:
         if len(answer_texts) != len(set(answer_texts)):
             errors.append("Duplicate answers found")
         
+        # Check for generic/opinion-based answers that cannot be objectively evaluated
+        forbidden_patterns = [
+            "this is not the correct",
+            "this is an unrelated",
+            "none of the above",
+            "all of the above",
+            "cannot be determined",
+            "depends on",
+            "this is incorrect",
+            "this is wrong",
+            "not applicable"
+        ]
+        
+        for idx, answer in enumerate(question.answers):
+            answer_lower = answer.text.lower().strip()
+            for pattern in forbidden_patterns:
+                if pattern in answer_lower:
+                    errors.append(
+                        f"Answer {idx + 1} contains generic/opinion-based text: '{answer.text}'. "
+                        "All answers must be concrete, factual statements."
+                    )
+                    break
+        
+        # Check that answers are substantial (not just placeholders)
+        for idx, answer in enumerate(question.answers):
+            if len(answer.text.strip()) < 10:
+                errors.append(f"Answer {idx + 1} is too short to be meaningful")
+        
         # Check metadata
         if not question.topic:
             errors.append("Topic not specified")

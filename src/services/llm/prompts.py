@@ -14,21 +14,30 @@ Concept: {concept_name}
 Concept Description: {concept_description}
 {content_context}
 
+CRITICAL REQUIREMENTS FOR ANSWERS:
+1. ALL answer options must be concrete, factual statements that can be objectively evaluated as true or false
+2. NEVER use generic placeholders like "This is not the correct definition", "This is an unrelated concept", "None of the above", or similar opinion-based statements
+3. Each incorrect answer should be a plausible alternative that demonstrates understanding of related concepts
+4. All answers must be specific statements about the concept, related concepts, or common misconceptions
+5. Answers should be educational - even wrong answers should teach something about the topic
+
 Generate a multiple-choice question with {num_answers} answer options.
-Provide a detailed explanation for why the correct answer is correct.
+Each answer must be a complete, factual statement that can be objectively evaluated.
 
 Return your response as a JSON object with this exact structure:
 {{
     "question_text": "Your question here",
     "answers": [
-        {{"text": "Answer option 1", "is_correct": true, "explanation": "Why this is correct"}},
-        {{"text": "Answer option 2", "is_correct": false, "explanation": "Why this is incorrect"}},
+        {{"text": "A specific factual statement about the concept", "is_correct": true, "explanation": "Why this is correct"}},
+        {{"text": "A plausible alternative or related concept statement", "is_correct": false, "explanation": "Why this is incorrect"}},
+        {{"text": "Another specific statement (could be a common misconception)", "is_correct": false, "explanation": "Why this is incorrect"}},
         ...
     ],
     "explanation": "Detailed explanation of the concept and why the correct answer is right"
 }}
 
-Make the question challenging and focused on understanding, not just memorization."""),
+Make the question challenging and focused on understanding, not just memorization.
+All answers must be concrete, factual statements - no generic placeholders allowed."""),
     ("human", "Generate the question.")
 ])
 

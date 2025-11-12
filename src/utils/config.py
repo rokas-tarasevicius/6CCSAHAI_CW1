@@ -7,7 +7,7 @@ class Config:
     
     # Mistral API
     MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "DDNWDdI7EojlRqY75qKZVnbtmF21QVCQ")
-    MISTRAL_MODEL = "mistral-large-latest"
+    MISTRAL_MODEL = "mistral-small-latest"
     
     # ElevenLabs API
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
