@@ -1,8 +1,19 @@
 import os
+import asyncio
 import json
 from llama_cloud_services import LlamaParse
 from typing import List, Dict
 
+async def parse_files(file_paths:List[str], parser:LlamaParse):
+    results = await parser.aparse(file_paths)
+    res = {}
+    for r in results:
+        text = ""
+        for doc in r.get_text_documents(split_by_page=False):
+            text = text + doc.text + "\n\n"
+        res = text
+    return res
+            
 if __name__ == "__main__":
 
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY", None)
@@ -17,12 +28,11 @@ if __name__ == "__main__":
     file_names:List[str] = [
         "LLMs.pdf",
     ]
-    result = parser.parse(file_names)[0]
-    text_documents = result.get_text_documents(split_by_page=False)
-    print(type(text_documents), len(text_documents))
-    
-    res:Dict[str, str] = {}
-    for file_name, doc in zip(file_names, text_documents):
-        res[file_name] = doc.text
+    res = asyncio.run(
+        parse_files(
+            file_paths=file_names,
+            parser=parser
+        )
+    )
     
     print(json.dumps(res, indent=4))
