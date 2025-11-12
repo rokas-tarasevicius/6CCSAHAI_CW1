@@ -3,6 +3,7 @@ import asyncio
 import json
 from llama_cloud_services import LlamaParse
 from typing import List, Dict, Any
+from datetime import datetime, timezone
 
 async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict[str, Any]]:
     """
@@ -26,6 +27,8 @@ async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict
                 "file_type": file_path.split(".")[-1],
                 "content_length": len(text),
                 "language": "en",
+                "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+                "timezone": "utc"
             },
             "content": text
         }
