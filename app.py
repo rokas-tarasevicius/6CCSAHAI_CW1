@@ -1,18 +1,16 @@
+"""Main Streamlit application entry point."""
 import streamlit as st
 
-st.set_page_config(page_title="PDF Upload", page_icon="📄")
+# Page configuration
+st.set_page_config(
+    page_title="Adaptive Learning Platform",
+    page_icon="🎓",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-st.title("PDF Upload")
+# Import the home page
+from src.ui.pages.home import render_home_page
 
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
-
-if uploaded_file is not None:
-    st.success(f"File uploaded: {uploaded_file.name}")
-    st.write(f"File size: {uploaded_file.size} bytes")
-    
-    # Display file info
-    with st.expander("File Details"):
-        st.write(f"**Filename:** {uploaded_file.name}")
-        st.write(f"**Size:** {uploaded_file.size:,} bytes")
-        st.write(f"**Type:** {uploaded_file.type}")
-
+# Render home page
+render_home_page()
