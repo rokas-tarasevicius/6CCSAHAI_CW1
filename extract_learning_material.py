@@ -2,9 +2,18 @@ import os
 import asyncio
 import json
 from llama_cloud_services import LlamaParse
-from typing import List, Dict
+from typing import List, Dict, Any
 
-async def parse_files(file_paths:List[str], parser:LlamaParse):
+async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict[str, Any]]:
+    """
+    Asynchronously parses one or more PDF/DOCX files into plain text and attaches some
+    metadata.
+
+    Args:
+        file_paths (List[str]): A list of file paths to documents to parse. Each path should
+                                point to a supported file type such as ".pdf" or ".docx"
+        parser (LlamaParse): LlamaParse client instance with a valid API key.
+    """
     results = await parser.aparse(file_paths)
     res = {}
     for r, file_path in zip(results, file_paths):
