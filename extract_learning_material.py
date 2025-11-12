@@ -11,7 +11,15 @@ async def parse_files(file_paths:List[str], parser:LlamaParse):
         text = ""
         for doc in r.get_text_documents(split_by_page=False):
             text = text + doc.text + "\n\n"
-        res[file_path] = text
+        res[file_path] = {
+            "metadata": {
+                "file_name": os.path.basename(file_path),
+                "file_type": file_path.split(".")[-1],
+                "content_length": len(text),
+                "language": "en",
+            },
+            "content": text
+        }
     return res
             
 if __name__ == "__main__":
