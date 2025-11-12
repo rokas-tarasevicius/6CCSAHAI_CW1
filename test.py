@@ -27,6 +27,7 @@ if __name__ == "__main__":
     )
     file_names:List[str] = [
         "LLMs.pdf",
+        "Transformers.pdf"
     ]
     res = asyncio.run(
         parse_files(
