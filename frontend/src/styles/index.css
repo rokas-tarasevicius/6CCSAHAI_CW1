@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap');
+
+:root {
+  /* Design System Colors - From Figma SGT 5 */
+  --color-bg-primary: #01090e;
+  --color-bg-secondary: #151515;
+  --color-text-primary: #e3f2fc;
+  --color-text-white: #ffffff;
+  --color-text-muted: #2d526c;
+  
+  --color-border-dark: #062538;
+  --color-border-blue: #1b90de;
+  --color-border-error: #ff0004;
+  --color-border-success: #1eff00;
+  
+  --color-shadow: rgba(227, 242, 252, 0.25);
+  
+  /* Typography - Space Grotesk */
+  --font-family: 'Space Grotesk', sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  
+  --font-size-20: 20px;
+  --font-size-21: 21.28px;
+  --font-size-24: 24px;
+  --font-size-28: 28.48px;
+  --font-size-38: 37.92px;
+  --font-size-67: 67.36px;
+  
+  /* Spacing */
+  --spacing-10: 10px;
+  --spacing-20: 20px;
+  --spacing-25: 25px;
+  --spacing-30: 30px;
+  --spacing-40: 40px;
+  --spacing-50: 50px;
+  --spacing-60: 60px;
+  --spacing-200: 200px;
+  
+  /* Border Radius */
+  --radius-40: 40px;
+  --radius-50: 50px;
+  
+  /* Layout */
+  --navbar-height: 70px;
+  --content-padding-x: 200px;
+  --content-padding-y: 50px;
+  --question-width: 644px;
+  --rating-width: 634px;
+  --mcq-height: 90px;
+  --mcq-padding: 30px;
+  --border-width: 3px;
+  
+  /* Animation Timing */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.5s;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}

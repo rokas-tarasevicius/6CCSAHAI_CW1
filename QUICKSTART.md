@@ -15,11 +15,30 @@ uv run python verify_setup.py
 You should see: `✅ All checks passed!`
 
 3. **Run the application:**
+
+**Option 1: Use the deployment script (recommended):**
 ```bash
-uv run streamlit run app.py
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-The app will open at `http://localhost:8501`
+**Option 2: Run manually:**
+
+Backend:
+```bash
+cd backend
+uv run uvicorn api.main:app --reload --port 8000
+```
+
+Frontend (in a new terminal):
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The backend will be at `http://localhost:8000`  
+The frontend will be at `http://localhost:5173`
 
 ## Using the Platform
 
@@ -73,23 +92,22 @@ uv run pytest tests/llm/
 
 ```
 coursework_1/
-├── app.py                  # Main entry point
-├── pages/                  # Streamlit pages
-│   ├── quiz.py            # Quiz interface
-│   └── video_feed.py      # Video recommendations
-├── src/
-│   ├── models/            # Data models (Pydantic)
-│   ├── services/          # Business logic
-│   │   ├── llm/          # Mistral & LangChain
-│   │   ├── question/     # Question generation
-│   │   ├── tracking/     # Performance tracking
-│   │   └── video/        # Video generation
-│   ├── ui/               # UI components
-│   └── utils/            # Utilities
-├── tests/                # Test suite
-│   ├── unit/            # Unit tests
-│   └── llm/             # LLM quality tests
-└── data/                # Course material
+├── backend/              # FastAPI backend
+│   └── api/            # API routes
+├── frontend/            # React frontend
+│   └── src/           # React components and pages
+├── src/                 # Shared Python code
+│   ├── models/          # Data models (Pydantic)
+│   ├── services/        # Business logic
+│   │   ├── llm/       # Mistral & LangChain
+│   │   ├── question/  # Question generation
+│   │   ├── tracking/  # Performance tracking
+│   │   └── video/     # Video generation
+│   └── utils/          # Utilities
+├── tests/               # Test suite
+│   ├── unit/          # Unit tests
+│   └── llm/           # LLM quality tests
+└── data/               # Course material
 ```
 
 ## API Keys

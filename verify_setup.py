@@ -34,12 +34,10 @@ def verify_imports():
         return False
     
     try:
-        from src.ui.pages.home import render_home_page
-        from src.ui.pages.quiz import render_quiz_page
-        from src.ui.pages.video_feed import render_video_feed_page
-        print("  ✅ UI pages")
+        from backend.api.main import app
+        print("  ✅ FastAPI app")
     except ImportError as e:
-        print(f"  ❌ UI pages: {e}")
+        print(f"  ❌ FastAPI app: {e}")
         return False
     
     return True
@@ -106,7 +104,9 @@ def main():
     print("\n" + "=" * 60)
     if all_good:
         print("✅ All checks passed! Ready to run:")
-        print("   uv run streamlit run app.py")
+        print("   Backend: cd backend && uv run uvicorn api.main:app --reload --port 8000")
+        print("   Frontend: cd frontend && npm install && npm run dev")
+        print("   Or use: ./deploy.sh")
     else:
         print("❌ Some checks failed. Please review the errors above.")
     print("=" * 60)

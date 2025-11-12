@@ -39,8 +39,10 @@ ENV/
 htmlcov/
 .tox/
 
-# Streamlit
-.streamlit/
+# Logs
+*.log
+backend.log
+frontend.log
 
 # Generated content
 assets/generated/
@@ -55,6 +57,19 @@ assets/generated/
 # OS
 .DS_Store
 Thumbs.db
+
+# React/Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
 
 # UV lock file (keep it)
 !uv.lock

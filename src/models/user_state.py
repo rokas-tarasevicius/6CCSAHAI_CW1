@@ -86,12 +86,3 @@ class UserPerformance(BaseModel):
                 for concept_name in subtopic_score.get_weak_concepts():
                     weak_concepts.append((topic_name, subtopic_name, concept_name))
         return weak_concepts
-
-
-class SessionState(BaseModel):
-    """Session state for Streamlit."""
-    performance: UserPerformance = Field(default_factory=UserPerformance)
-    current_question: Optional[object] = None
-    chat_history: List[Dict[str, str]] = Field(default_factory=list)
-    initialized: bool = False
-

@@ -1,6 +1,6 @@
 # Adaptive Learning Platform
 
-An AI-powered adaptive learning platform that generates personalized questions, tracks performance, and creates custom video content using Streamlit, LangChain, and Mistral AI.
+An AI-powered adaptive learning platform that generates personalized questions, tracks performance, and creates custom video content using React, FastAPI, LangChain, and Mistral AI.
 
 ## Features
 
@@ -14,18 +14,20 @@ An AI-powered adaptive learning platform that generates personalized questions, 
 
 ```
 coursework_1/
-├── src/
-│   ├── models/           # Pydantic data models
-│   ├── services/         # Business logic
-│   │   ├── llm/         # Mistral & LangChain integration
-│   │   ├── question/    # Question generation & adaptation
-│   │   ├── tracking/    # Performance tracking
-│   │   └── video/       # Video generation pipeline
-│   ├── ui/              # Streamlit components
-│   └── utils/           # Utilities
+├── backend/             # FastAPI backend
+│   └── api/            # API routes and endpoints
+├── frontend/            # React frontend
+│   └── src/            # React components and pages
+├── src/                 # Shared Python code
+│   ├── models/          # Pydantic data models
+│   ├── services/        # Business logic
+│   │   ├── llm/        # Mistral & LangChain integration
+│   │   ├── question/   # Question generation & adaptation
+│   │   ├── tracking/   # Performance tracking
+│   │   └── video/      # Video generation pipeline
+│   └── utils/          # Utilities
 ├── tests/               # Pytest & DeepEval tests
-├── data/                # Course material JSON
-└── pages/               # Streamlit pages
+└── data/                # Course material JSON
 ```
 
 ## Setup
@@ -41,9 +43,9 @@ coursework_1/
 ### Installation
 
 1. Install UV if not already installed:
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
 
 2. Clone and navigate to the project:
 ```bash
@@ -51,9 +53,9 @@ cd coursework_1
 ```
 
 3. Install dependencies:
-```bash
-uv sync
-```
+   ```bash
+   uv sync
+   ```
 
 4. (Optional) Set up environment variables:
 ```bash
@@ -67,11 +69,26 @@ Note: The Mistral API key is pre-configured in the code for POC purposes.
 
 ### Run the Application
 
+**Backend (FastAPI):**
 ```bash
-uv run streamlit run app.py
+cd backend
+uv run uvicorn api.main:app --reload --port 8000
 ```
 
-The application will be available at `http://localhost:8501`
+**Frontend (React):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The backend will be available at `http://localhost:8000`  
+The frontend will be available at `http://localhost:5173`
+
+**Or use the deployment script:**
+```bash
+./deploy.sh
+```
 
 ### Run Tests
 
@@ -149,13 +166,14 @@ The platform uses a JSON file for course content. The default course covers Pyth
 
 ## Technology Stack
 
-- **Frontend**: Streamlit
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: FastAPI + Python
 - **LLM**: Mistral AI via LangChain
 - **Embeddings**: Mistral Embeddings (cosine similarity)
 - **TTS**: ElevenLabs API
 - **Video**: FFmpeg
 - **Testing**: Pytest, DeepEval
-- **Package Manager**: UV
+- **Package Manager**: UV (Python), npm (Node.js)
 
 ## Configuration
 
@@ -172,15 +190,17 @@ Edit `src/utils/config.py` to customize:
 
 - **Models**: Pydantic models for type safety and validation
 - **Services**: Separated business logic by domain
-- **UI Components**: Reusable Streamlit components
+- **Backend API**: FastAPI routes exposing service logic
+- **Frontend**: React components and pages
 - **Tests**: Comprehensive unit and LLM quality tests
 
 ### Adding New Features
 
 1. Define models in `src/models/`
 2. Implement service logic in `src/services/`
-3. Create UI components in `src/ui/components/`
-4. Add tests in `tests/`
+3. Create API routes in `backend/api/routes/`
+4. Create React components in `frontend/src/components/`
+5. Add tests in `tests/`
 
 ## Known Limitations (POC)
 
