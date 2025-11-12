@@ -7,11 +7,11 @@ from typing import List, Dict
 async def parse_files(file_paths:List[str], parser:LlamaParse):
     results = await parser.aparse(file_paths)
     res = {}
-    for r in results:
+    for r, file_path in zip(results, file_paths):
         text = ""
         for doc in r.get_text_documents(split_by_page=False):
             text = text + doc.text + "\n\n"
-        res = text
+        res[file_path] = text
     return res
             
 if __name__ == "__main__":
@@ -36,3 +36,5 @@ if __name__ == "__main__":
     )
     
     print(json.dumps(res, indent=4))
+    with open(f"parsed_data.json", "w") as f:
+        json.dump(res, f, indent=4)
