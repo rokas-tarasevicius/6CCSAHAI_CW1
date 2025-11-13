@@ -2,43 +2,30 @@
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 
-# Question Generation Prompt
+# Question Generation Prompt (optimized for speed)
 QUESTION_GENERATION_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """You are an expert educator creating multiple-choice questions for a learning platform.
-Generate a {difficulty} difficulty question about the following concept.
+    ("system", """Create a {difficulty} multiple-choice question.
 
-Course Context:
-Topic: {topic}
-Subtopic: {subtopic}
-Concept: {concept_name}
-Concept Description: {concept_description}
+Topic: {topic} | Subtopic: {subtopic} | Concept: {concept_name}
+Description: {concept_description}
 {content_context}
 
-CRITICAL REQUIREMENTS FOR ANSWERS:
-1. ALL answer options must be concrete, factual statements that can be objectively evaluated as true or false
-2. NEVER use generic placeholders like "This is not the correct definition", "This is an unrelated concept", "None of the above", or similar opinion-based statements
-3. Each incorrect answer should be a plausible alternative that demonstrates understanding of related concepts
-4. All answers must be specific statements about the concept, related concepts, or common misconceptions
-5. Answers should be educational - even wrong answers should teach something about the topic
+Rules:
+- {num_answers} answer options
+- All answers must be concrete, factual statements
+- No generic placeholders like "This is incorrect" or "None of the above"
+- Each wrong answer should be a plausible alternative
 
-Generate a multiple-choice question with {num_answers} answer options.
-Each answer must be a complete, factual statement that can be objectively evaluated.
-
-Return your response as a JSON object with this exact structure:
+Return JSON only:
 {{
-    "question_text": "Your question here",
+    "question_text": "Question text",
     "answers": [
-        {{"text": "A specific factual statement about the concept", "is_correct": true, "explanation": "Why this is correct"}},
-        {{"text": "A plausible alternative or related concept statement", "is_correct": false, "explanation": "Why this is incorrect"}},
-        {{"text": "Another specific statement (could be a common misconception)", "is_correct": false, "explanation": "Why this is incorrect"}},
-        ...
+        {{"text": "Factual statement", "is_correct": true, "explanation": "Brief explanation"}},
+        {{"text": "Plausible alternative", "is_correct": false, "explanation": "Why wrong"}}
     ],
-    "explanation": "Detailed explanation of the concept and why the correct answer is right"
-}}
-
-Make the question challenging and focused on understanding, not just memorization.
-All answers must be concrete, factual statements - no generic placeholders allowed."""),
-    ("human", "Generate the question.")
+    "explanation": "Concise explanation"
+}}"""),
+    ("human", "Generate question.")
 ])
 
 

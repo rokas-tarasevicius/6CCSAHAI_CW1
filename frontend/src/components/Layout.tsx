@@ -17,14 +17,14 @@ export default function Layout({ children }: LayoutProps) {
           </Link>
           <div className="navbar-links">
             <Link
-              to="/"
-              className={location.pathname === '/' ? 'active' : ''}
+              to="/courses"
+              className={location.pathname === '/courses' ? 'active' : ''}
             >
               Courses
             </Link>
             <Link
-              to="/quiz"
-              className={location.pathname === '/quiz' ? 'active' : ''}
+              to="/"
+              className={location.pathname === '/' ? 'active' : ''}
             >
               Dashboard
             </Link>

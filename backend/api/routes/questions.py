@@ -116,14 +116,14 @@ async def generate_question(
         # Select next concept
         topic, subtopic, concept, difficulty = adapter.select_next_concept()
         
-        # Get content context
+        # Get content context (optimized lookup)
         content_context = ""
-        for t in course.topics:
-            if t.name == topic:
-                for st_obj in t.subtopics:
-                    if st_obj.name == subtopic:
-                        content_context = st_obj.content or ""
-                        break
+        # Cache topic/subtopic lookup for faster access
+        topic_obj = next((t for t in course.topics if t.name == topic), None)
+        if topic_obj:
+            subtopic_obj = next((st for st in topic_obj.subtopics if st.name == subtopic), None)
+            if subtopic_obj:
+                content_context = subtopic_obj.content or ""
         
         # Generate question
         question = generator.generate_question(

@@ -55,10 +55,20 @@
   flex: 1;
 }
 
+.quiz-left-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-30);
+}
+
 .question-section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-30);
+}
+
+.rating-pane {
+  position: relative;
 }
 
 .explanation-section {

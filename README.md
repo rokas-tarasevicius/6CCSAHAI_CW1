@@ -57,13 +57,17 @@ cd coursework_1
    uv sync
    ```
 
-4. (Optional) Set up environment variables:
-```bash
-export MISTRAL_API_KEY="your-api-key"
-export ELEVENLABS_API_KEY="your-elevenlabs-key"
-```
-
-Note: The Mistral API key is pre-configured in the code for POC purposes.
+4. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your API keys
+   ```
+   
+   Required:
+   - `MISTRAL_API_KEY`: Your Mistral AI API key
+   
+   Optional:
+   - `ELEVENLABS_API_KEY`: Your ElevenLabs API key (for video generation)
 
 ## Usage
 

@@ -5,6 +5,7 @@ from src.models.question import MultipleChoiceQuestion, Answer, DifficultyLevel
 from src.models.course import Concept
 from src.services.llm.mistral_client import MistralClient
 from src.services.llm.prompts import QUESTION_GENERATION_PROMPT
+from src.services.question.cache import get_cache
 from src.utils.config import Config
 
 
@@ -17,7 +18,12 @@ class QuestionGenerator:
         Args:
             mistral_client: Optional MistralClient instance
         """
-        self.client = mistral_client or MistralClient()
+        # Use smaller max_tokens for faster question generation
+        if mistral_client is None:
+            from src.utils.config import Config
+            self.client = MistralClient(max_tokens=Config.QUESTION_MAX_TOKENS)
+        else:
+            self.client = mistral_client
     
     def generate_question(
         self,
@@ -26,7 +32,8 @@ class QuestionGenerator:
         concept: Concept,
         difficulty: DifficultyLevel = DifficultyLevel.MEDIUM,
         content_context: str = "",
-        num_answers: int = 4
+        num_answers: int = 4,
+        use_cache: bool = True
     ) -> MultipleChoiceQuestion:
         """Generate a multiple choice question for a specific concept.
         
@@ -37,10 +44,18 @@ class QuestionGenerator:
             difficulty: Question difficulty level
             content_context: Additional content context
             num_answers: Number of answer options (2-5)
+            use_cache: Whether to use cached questions
             
         Returns:
             Generated MultipleChoiceQuestion
         """
+        # Check cache first
+        if use_cache:
+            cache = get_cache()
+            cached_question = cache.get(topic, subtopic, concept.name, difficulty)
+            if cached_question:
+                return cached_question
+        
         num_answers = max(Config.MIN_ANSWERS, min(Config.MAX_ANSWERS, num_answers))
         
         # Prepare the prompt
@@ -113,6 +128,11 @@ class QuestionGenerator:
                 # If validation fails, log and use fallback
                 print(f"Generated question failed validation: {validation_errors}")
                 return self._generate_fallback_question(topic, subtopic, concept, difficulty)
+            
+            # Cache the question
+            if use_cache:
+                cache = get_cache()
+                cache.set(topic, subtopic, concept.name, difficulty, question)
             
             return question
             

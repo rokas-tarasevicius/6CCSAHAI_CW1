@@ -112,12 +112,17 @@ coursework_1/
 
 ## API Keys
 
-The Mistral API key is pre-configured for this POC. 
-
-For full video generation, set optional environment variables:
+Set up your API keys by copying the example file and editing it:
 ```bash
-export ELEVENLABS_API_KEY="your-key"
+cp .env.example .env
+# Edit .env and add your API keys
 ```
+
+Required:
+- `MISTRAL_API_KEY`: Your Mistral AI API key
+
+Optional:
+- `ELEVENLABS_API_KEY`: Your ElevenLabs API key (for video generation)
 
 ## Customizing Course Material
 

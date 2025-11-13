@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePerformanceStore } from '../store/usePerformanceStore'
 import { questionsApi, performanceApi } from '../services/api'
+import { calculateScoreChange } from '../utils/scoreChange'
 import type { Question } from '../types'
 import QuestionCard from '../components/QuestionCard'
 import ScorePanel from '../components/ScorePanel'
@@ -17,6 +18,7 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showExplanation, setShowExplanation] = useState(false)
+  const [scoreChange, setScoreChange] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     loadQuestion()
@@ -26,6 +28,7 @@ export default function QuizPage() {
     setLoading(true)
     setError(null)
     setShowExplanation(false)
+    setScoreChange(undefined) // Reset score change when loading new question
     try {
       const newQuestion = await questionsApi.generateQuestion(performance)
       setQuestion(newQuestion)
@@ -48,6 +51,7 @@ export default function QuizPage() {
     if (selectedAnswer === null || !question) return
 
     const isCorrect = question.answers[selectedAnswer]?.is_correct || false
+    const previousScore = performance.trophy_score || 0
     
     // Update performance
     try {
@@ -58,7 +62,16 @@ export default function QuizPage() {
         question.concepts[0] || '',
         isCorrect
       )
+      
+      // Calculate score change using utility function
+      const newScore = updatedPerformance.trophy_score || 0
+      const change = calculateScoreChange(previousScore, newScore)
+      
+      // Update performance state first
       setPerformance(updatedPerformance)
+      
+      // Then set score change (this will trigger re-render with new score)
+      setScoreChange(change)
     } catch (err) {
       console.error('Failed to record answer:', err)
     }
@@ -111,30 +124,34 @@ export default function QuizPage() {
       </div>
 
       <div className="quiz-content">
-        <div className="question-section">
-          <QuestionCard
-            question={question}
-            selectedAnswer={selectedAnswer}
-            isAnswered={isAnswered}
-            onAnswerSelect={handleAnswerSelect}
-            onSubmit={handleSubmit}
-          />
-        </div>
-
-        {showExplanation ? (
-          <div className="explanation-section">
-            <div className="explanation-text">
-              {question.explanation}
-            </div>
-            <ChatWidget
+        <div className="quiz-left-pane">
+          <div className="question-section">
+            <QuestionCard
               question={question}
-              selectedAnswer={selectedAnswer!}
-              isCorrect={question.answers[selectedAnswer!]?.is_correct || false}
+              selectedAnswer={selectedAnswer}
+              isAnswered={isAnswered}
+              onAnswerSelect={handleAnswerSelect}
+              onSubmit={handleSubmit}
             />
           </div>
-        ) : (
-          <ScorePanel performance={performance} />
-        )}
+
+          {showExplanation && (
+            <div className="explanation-section">
+              <div className="explanation-text">
+                {question.explanation}
+              </div>
+              <ChatWidget
+                question={question}
+                selectedAnswer={selectedAnswer!}
+                isCorrect={question.answers[selectedAnswer!]?.is_correct || false}
+              />
+            </div>
+          )}
+        </div>
+        
+        <div className="rating-pane">
+          <ScorePanel performance={performance} scoreChange={scoreChange} />
+        </div>
       </div>
     </div>
   )

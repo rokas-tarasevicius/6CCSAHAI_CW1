@@ -9,21 +9,23 @@ from src.utils.config import Config
 class MistralClient:
     """Wrapper for Mistral API with LangChain."""
     
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None, max_tokens: Optional[int] = None):
         """Initialize Mistral client.
         
         Args:
             api_key: Mistral API key (defaults to Config.MISTRAL_API_KEY)
             model: Model name (defaults to Config.MISTRAL_MODEL)
+            max_tokens: Max tokens (defaults to Config.MAX_TOKENS)
         """
         self.api_key = api_key or Config.MISTRAL_API_KEY
         self.model = model or Config.MISTRAL_MODEL
+        self.max_tokens = max_tokens or Config.MAX_TOKENS
         
         self.llm = ChatMistralAI(
             api_key=self.api_key,
             model=self.model,
             temperature=Config.TEMPERATURE,
-            max_tokens=Config.MAX_TOKENS
+            max_tokens=self.max_tokens
         )
     
     def generate(self, prompt: str, system_message: Optional[str] = None) -> str:
