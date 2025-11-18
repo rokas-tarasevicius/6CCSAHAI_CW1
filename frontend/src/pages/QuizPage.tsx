@@ -5,7 +5,6 @@ import { calculateScoreChange } from '../utils/scoreChange'
 import type { Question } from '../types'
 import QuestionCard from '../components/QuestionCard'
 import ScorePanel from '../components/ScorePanel'
-import ChatWidget from '../components/ChatWidget'
 import './QuizPage.css'
 
 const imgVector = "http://localhost:3845/assets/b086553be9d7f7cefeee97b195317b51e7ec2626.svg"
@@ -13,30 +12,74 @@ const imgVector = "http://localhost:3845/assets/b086553be9d7f7cefeee97b195317b51
 export default function QuizPage() {
   const { performance, setPerformance } = usePerformanceStore()
   const [question, setQuestion] = useState<Question | null>(null)
+  const [cachedQuestion, setCachedQuestion] = useState<Question | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showExplanation, setShowExplanation] = useState(false)
   const [scoreChange, setScoreChange] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     loadQuestion()
   }, [])
 
+  // Pre-generate next question in the background (async, non-blocking)
+  const preloadNextQuestion = async (performanceData?: typeof performance) => {
+    try {
+      const perfData = performanceData || performance
+      const nextQuestion = await questionsApi.generateQuestion(perfData)
+      setCachedQuestion(nextQuestion)
+    } catch (err) {
+      // Silently fail - we'll generate on demand if preload fails
+      console.error('Failed to preload next question:', err)
+    }
+  }
+
+  // Start pre-generating next question when a question is displayed
+  useEffect(() => {
+    if (question) {
+      // Start pre-generating the next question asynchronously (only if not already cached)
+      // This runs whenever a new question is displayed, using current performance data
+      if (!cachedQuestion) {
+        // Use current performance from store (will be updated after submit)
+        preloadNextQuestion(performance)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question])
+
   const loadQuestion = async () => {
     setLoading(true)
     setError(null)
-    setShowExplanation(false)
     setScoreChange(undefined) // Reset score change when loading new question
+    
     try {
-      const newQuestion = await questionsApi.generateQuestion(performance)
-      setQuestion(newQuestion)
-      setSelectedAnswer(null)
-      setIsAnswered(false)
+      // Use cached question if available, otherwise generate new one
+      let newQuestion: Question | null = null
+      
+      if (cachedQuestion) {
+        // Use cached question immediately
+        newQuestion = cachedQuestion
+        setCachedQuestion(null) // Clear cache
+      } else {
+        // Generate new question
+        console.log('Generating new question...')
+        newQuestion = await questionsApi.generateQuestion(performance)
+        console.log('Question generated:', newQuestion)
+      }
+      
+      if (newQuestion) {
+        setQuestion(newQuestion)
+        setSelectedAnswer(null)
+        setIsAnswered(false)
+        setLoading(false)
+        // Pre-generation will be triggered by useEffect when question is set
+      } else {
+        throw new Error('Failed to get question')
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to load question')
-    } finally {
+      console.error('Error loading question:', err)
+      setError(err?.response?.data?.detail || err?.message || 'Failed to load question')
       setLoading(false)
     }
   }
@@ -77,11 +120,22 @@ export default function QuizPage() {
     }
 
     setIsAnswered(true)
-    setShowExplanation(true)
+    // Pre-generation happens automatically via useEffect when question is displayed
   }
 
-  const handleNext = () => {
-    loadQuestion()
+  const handleNext = async () => {
+    // If we have a cached question, use it immediately (no loading)
+    if (cachedQuestion) {
+      setQuestion(cachedQuestion)
+      setCachedQuestion(null) // Clear cache
+      setSelectedAnswer(null)
+      setIsAnswered(false)
+      setScoreChange(undefined)
+      // Pre-generation will be triggered by useEffect when question is set
+    } else {
+      // No cached question, show loading and generate on demand
+      loadQuestion()
+    }
   }
 
   if (loading) {
@@ -111,16 +165,6 @@ export default function QuizPage() {
     <div className="quiz-page">
       <div className="subject-header">
         <h1 className="subject-title">HUMAN AI INTERACTION / PROTOTYPING</h1>
-        {!showExplanation && (
-          <button className="btn-ai-slop">
-            AI Slop
-          </button>
-        )}
-        {showExplanation && (
-          <button onClick={handleNext} className="btn-next">
-            Next Question
-          </button>
-        )}
       </div>
 
       <div className="quiz-content">
@@ -132,21 +176,9 @@ export default function QuizPage() {
               isAnswered={isAnswered}
               onAnswerSelect={handleAnswerSelect}
               onSubmit={handleSubmit}
+              onNext={handleNext}
             />
           </div>
-
-          {showExplanation && (
-            <div className="explanation-section">
-              <div className="explanation-text">
-                {question.explanation}
-              </div>
-              <ChatWidget
-                question={question}
-                selectedAnswer={selectedAnswer!}
-                isCorrect={question.answers[selectedAnswer!]?.is_correct || false}
-              />
-            </div>
-          )}
         </div>
         
         <div className="rating-pane">

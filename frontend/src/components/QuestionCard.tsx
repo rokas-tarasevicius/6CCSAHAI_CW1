@@ -7,6 +7,7 @@ interface QuestionCardProps {
   isAnswered: boolean
   onAnswerSelect: (index: number) => void
   onSubmit: () => void
+  onNext?: () => void
 }
 
 export default function QuestionCard({
@@ -15,6 +16,7 @@ export default function QuestionCard({
   isAnswered,
   onAnswerSelect,
   onSubmit,
+  onNext,
 }: QuestionCardProps) {
   const correctAnswerIndex = question.answers.findIndex((ans) => ans.is_correct)
 
@@ -56,10 +58,20 @@ export default function QuestionCard({
         })}
       </div>
 
-      {!isAnswered && selectedAnswer !== null && (
-        <button onClick={onSubmit} className="btn-submit">
+      {!isAnswered ? (
+        <button 
+          onClick={onSubmit} 
+          disabled={selectedAnswer === null}
+          className={`btn-submit ${selectedAnswer !== null ? 'btn-glow' : ''}`}
+        >
           Submit Answer
         </button>
+      ) : (
+        onNext && (
+          <button onClick={onNext} className="btn-submit btn-glow">
+            Next Question
+          </button>
+        )
       )}
     </div>
   )
