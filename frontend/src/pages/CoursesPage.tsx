@@ -216,9 +216,9 @@ export default function CoursesPage() {
               ))}
             </div>
           ) : (
-            <div className="empty-state">
+          <div className="empty-state">
               <p>No parsed files yet. Upload a PDF to get started.</p>
-            </div>
+          </div>
           )}
         </div>
       </div>

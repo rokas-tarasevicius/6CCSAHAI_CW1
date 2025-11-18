@@ -7,7 +7,6 @@ import QuestionCard from '../components/QuestionCard'
 import ScorePanel from '../components/ScorePanel'
 import './QuizPage.css'
 
-const imgVector = "http://localhost:3845/assets/b086553be9d7f7cefeee97b195317b51e7ec2626.svg"
 
 export default function QuizPage() {
   const { performance, setPerformance } = usePerformanceStore()

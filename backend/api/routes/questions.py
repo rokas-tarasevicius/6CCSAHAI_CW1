@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from functools import partial
 import sys
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -12,10 +13,13 @@ from src.services.question.generator import QuestionGenerator
 from src.services.question.adapter import QuestionAdapter
 from src.services.tracking.performance_tracker import PerformanceTracker
 from src.services.llm.mistral_client import MistralClient
-from src.utils.course_loader import CourseLoader
+from src.models.course import CourseStructure, Topic, Subtopic, Concept
 from src.models.question import DifficultyLevel
 
 router = APIRouter()
+
+# Calculate project root once
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 # Global instances (in production, use dependency injection)
 _mistral_client = None
@@ -39,14 +43,70 @@ def get_question_generator():
     return _question_generator
 
 
-def get_course():
-    """Get or load course."""
+def get_course(force_reload: bool = False):
+    """Get or load course from parsed_data.json.
+    
+    Args:
+        force_reload: If True, reload the course even if already loaded
+    """
     global _course
-    if _course is None:
-        # Resolve path relative to project root
-        project_root = Path(__file__).parent.parent.parent.parent
-        course_path = project_root / "data" / "course_material.json"
-        _course = CourseLoader.load_from_file(str(course_path))
+    if _course is None or force_reload:
+        parsed_data_file = PROJECT_ROOT / "data" / "parsed_data.json"
+        
+        if not parsed_data_file.exists():
+            # Return empty course structure if no parsed data
+            _course = CourseStructure(
+                title="No Course Material",
+                description="Upload PDF files to generate course material",
+                topics=[]
+            )
+            return _course
+        
+        # Load parsed data
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            parsed_data = json.load(f)
+        
+        # Convert parsed data to CourseStructure
+        topics = []
+        for file_path, file_data in parsed_data.items():
+            file_name = file_data["metadata"]["file_name"]
+            content = file_data["content"]
+            
+            # Extract topic name from file name (remove .pdf extension)
+            topic_name = file_name.replace('.pdf', '').replace('_', ' ').title()
+            
+            # Use more content for better context (up to 20000 chars)
+            # Split content into chunks to create multiple concepts if content is long
+            content_preview = content[:20000] if len(content) > 20000 else content
+            
+            # Create a single subtopic for the entire PDF content
+            subtopic = Subtopic(
+                name="Main Content",
+                description=f"Content from {file_name}",
+                concepts=[
+                    Concept(
+                        name=topic_name,
+                        description=f"Key concepts from {file_name}. Content length: {len(content)} characters.",
+                        keywords=[]
+                    )
+                ],
+                content=content_preview  # Use more content for better context
+            )
+            
+            topic = Topic(
+                name=topic_name,
+                description=f"Material from {file_name}",
+                subtopics=[subtopic]
+            )
+            
+            topics.append(topic)
+        
+        _course = CourseStructure(
+            title="Parsed Course Material",
+            description="Course material extracted from uploaded PDF files",
+            topics=topics
+        )
+    
     return _course
 
 
@@ -119,14 +179,29 @@ async def generate_question(
         # Select next concept
         topic, subtopic, concept, difficulty = adapter.select_next_concept()
         
-        # Get content context (optimized lookup)
+        # Get content context from parsed data
         content_context = ""
-        # Cache topic/subtopic lookup for faster access
         topic_obj = next((t for t in course.topics if t.name == topic), None)
         if topic_obj:
             subtopic_obj = next((st for st in topic_obj.subtopics if st.name == subtopic), None)
             if subtopic_obj:
                 content_context = subtopic_obj.content or ""
+            
+            # If no content in subtopic, try to get from parsed_data.json directly
+            if not content_context:
+                parsed_data_file = PROJECT_ROOT / "data" / "parsed_data.json"
+                if parsed_data_file.exists():
+                    with open(parsed_data_file, 'r', encoding='utf-8') as f:
+                        parsed_data = json.load(f)
+                    
+                    # Find matching file by topic name
+                    for file_path, file_data in parsed_data.items():
+                        file_name = file_data["metadata"]["file_name"]
+                        if topic.lower() in file_name.lower() or file_name.lower().replace('.pdf', '') in topic.lower():
+                            # Use more content for better question generation (up to 20000 chars)
+                            full_content = file_data["content"]
+                            content_context = full_content[:20000] if len(full_content) > 20000 else full_content
+                            break
         
         # Generate question
         question = generator.generate_question(
