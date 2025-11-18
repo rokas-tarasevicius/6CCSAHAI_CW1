@@ -8,7 +8,10 @@ export default function CoursesPage() {
   const [dragActive, setDragActive] = useState(false)
   const [parsedData, setParsedData] = useState<ParsedDataResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     loadCourse()
@@ -17,11 +20,13 @@ export default function CoursesPage() {
   const loadCourse = async () => {
     try {
       setLoading(true)
-      setError(null)
+      setLoadError(null)
       const data = await courseApi.getCourse()
       setParsedData(data)
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to load parsed data')
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to load parsed data'
+      setLoadError(errorMessage)
+      console.error('Error loading course data:', errorMessage)
     } finally {
       setLoading(false)
     }
@@ -62,7 +67,7 @@ export default function CoursesPage() {
 
   const handleRemove = () => {
     setSelectedFile(null)
-    setError(null)
+    setUploadError(null)
     setSuccess(null)
   }
 
@@ -70,7 +75,7 @@ export default function CoursesPage() {
     if (!selectedFile) return
 
     setUploading(true)
-    setError(null)
+    setUploadError(null)
     setSuccess(null)
 
     try {
@@ -78,11 +83,15 @@ export default function CoursesPage() {
       if (result.success) {
         setSuccess(result.message)
         setSelectedFile(null)
+        // Reload the course data after successful upload
+        await loadCourse()
       } else {
-        setError(result.message || 'Upload failed')
+        setUploadError(result.message || 'Upload failed')
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to upload PDF')
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload PDF'
+      setUploadError(errorMessage)
+      console.error('Error uploading PDF:', errorMessage)
     } finally {
       setUploading(false)
     }
@@ -162,9 +171,9 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {error && (
+          {uploadError && (
             <div className="upload-message error">
-              {error}
+              {uploadError}
             </div>
           )}
 
@@ -181,9 +190,9 @@ export default function CoursesPage() {
             <div className="empty-state">
               <p>Loading parsed files...</p>
             </div>
-          ) : error ? (
+          ) : loadError ? (
             <div className="empty-state">
-              <p>{error}</p>
+              <p className="error-text">Error: {loadError}</p>
             </div>
           ) : parsedData && Object.keys(parsedData.files).length > 0 ? (
             <div className="parsed-files-list">
