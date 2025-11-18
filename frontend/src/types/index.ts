@@ -82,4 +82,22 @@ export interface Concept {
   keywords: string[]
 }
 
+export interface ParsedFileMetadata {
+  file_name: string
+  file_type: string
+  content_length: number
+  language: string
+  extraction_timestamp: string
+  timezone: string
+}
+
+export interface ParsedFileData {
+  metadata: ParsedFileMetadata
+  content: string
+}
+
+export interface ParsedDataResponse {
+  files: Record<string, ParsedFileData>
+}
+
 

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Question, Performance, VideoRecommendation, VideoContent, Course } from '../types'
+import type { Question, Performance, VideoRecommendation, VideoContent, Course, ParsedDataResponse } from '../types'
 
 const API_BASE_URL = '/api'
 
@@ -11,8 +11,8 @@ const api = axios.create({
 })
 
 export const courseApi = {
-  getCourse: async (): Promise<Course> => {
-    const response = await api.get<Course>('/course/')
+  getCourse: async (): Promise<ParsedDataResponse> => {
+    const response = await api.get<ParsedDataResponse>('/course/')
     return response.data
   },
 }

@@ -1,58 +1,64 @@
 """Course material API routes."""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import sys
+import json
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-from src.utils.course_loader import CourseLoader
-from src.models.course import CourseStructure
+# Calculate project root once
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 router = APIRouter()
 
 
-class CourseResponse(BaseModel):
-    """Course structure response."""
-    title: str
-    description: str
-    topics: List[dict]
+class ParsedFileMetadata(BaseModel):
+    """Metadata for a parsed file."""
+    file_name: str
+    file_type: str
+    content_length: int
+    language: str
+    extraction_timestamp: str
+    timezone: str
 
 
-@router.get("/", response_model=CourseResponse)
+class ParsedFileData(BaseModel):
+    """Data structure for a parsed file."""
+    metadata: ParsedFileMetadata
+    content: str
+
+
+class ParsedDataResponse(BaseModel):
+    """Response model for parsed data."""
+    files: Dict[str, ParsedFileData]
+
+
+@router.get("/", response_model=ParsedDataResponse)
 async def get_course():
-    """Get course material."""
+    """Get parsed course material from PDF files."""
     try:
-        course = CourseLoader.load_from_file("data/course_material.json")
-        return CourseResponse(
-            title=course.title,
-            description=course.description,
-            topics=[
-                {
-                    "name": topic.name,
-                    "description": topic.description,
-                    "subtopics": [
-                        {
-                            "name": subtopic.name,
-                            "description": subtopic.description,
-                            "concepts": [
-                                {
-                                    "name": concept.name,
-                                    "description": concept.description,
-                                    "keywords": concept.keywords
-                                }
-                                for concept in subtopic.concepts
-                            ],
-                            "content": subtopic.content
-                        }
-                        for subtopic in topic.subtopics
-                    ]
-                }
-                for topic in course.topics
-            ]
-        )
+        # Get absolute path to parsed data file
+        parsed_data_file = PROJECT_ROOT / "data" / "parsed_data.json"
+        
+        if not parsed_data_file.exists():
+            raise HTTPException(status_code=404, detail="Parsed data file not found")
+        
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            parsed_data = json.load(f)
+        
+        # Convert the parsed data to the response model
+        files = {}
+        for file_path, file_data in parsed_data.items():
+            files[file_path] = ParsedFileData(
+                metadata=ParsedFileMetadata(**file_data["metadata"]),
+                content=file_data["content"]
+            )
+        
+        return ParsedDataResponse(files=files)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load course: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load parsed data: {str(e)}")
 
 

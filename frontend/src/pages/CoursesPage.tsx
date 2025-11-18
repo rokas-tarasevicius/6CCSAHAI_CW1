@@ -1,9 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './CoursesPage.css'
+import { courseApi } from '../services/api'
+import type { ParsedDataResponse } from '../types'
 
 export default function CoursesPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [parsedData, setParsedData] = useState<ParsedDataResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadCourse()
+  }, [])
+
+  const loadCourse = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await courseApi.getCourse()
+      setParsedData(data)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'Failed to load parsed data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -111,9 +133,40 @@ export default function CoursesPage() {
 
         <div className="courses-list">
           <h2 className="section-title">Your Courses</h2>
-          <div className="empty-state">
-            <p>No courses yet. Upload a PDF to get started.</p>
-          </div>
+          {loading ? (
+            <div className="empty-state">
+              <p>Loading parsed files...</p>
+            </div>
+          ) : error ? (
+            <div className="empty-state">
+              <p>{error}</p>
+            </div>
+          ) : parsedData && Object.keys(parsedData.files).length > 0 ? (
+            <div className="parsed-files-list">
+              {Object.entries(parsedData.files).map(([filePath, fileData]) => (
+                <div key={filePath} className="parsed-file-card">
+                  <div className="parsed-file-header">
+                    <h3 className="parsed-file-title">{fileData.metadata.file_name}</h3>
+                    <div className="parsed-file-meta">
+                      <span className="meta-item">Type: {fileData.metadata.file_type.toUpperCase()}</span>
+                      <span className="meta-item">Size: {(fileData.metadata.content_length / 1024).toFixed(2)} KB</span>
+                      <span className="meta-item">Language: {fileData.metadata.language}</span>
+                    </div>
+                  </div>
+                  <div className="parsed-file-content">
+                    <p className="content-preview">
+                      {fileData.content.substring(0, 500)}
+                      {fileData.content.length > 500 ? '...' : ''}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No parsed files yet. Upload a PDF to get started.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -269,3 +269,186 @@
   margin: 0;
 }
 
+.course-card {
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-40);
+  background: transparent;
+  padding: var(--spacing-40);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-30);
+}
+
+.course-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-10);
+  padding-bottom: var(--spacing-30);
+  border-bottom: var(--border-width) solid var(--color-border-dark);
+}
+
+.course-title {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-28);
+  color: var(--color-text-white);
+  margin: 0;
+}
+
+.course-description {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-21);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.course-topics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-30);
+}
+
+.topic-card {
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-40);
+  background: rgba(27, 144, 222, 0.05);
+  padding: var(--spacing-30);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.topic-name {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-24);
+  color: var(--color-text-white);
+  margin: 0;
+}
+
+.topic-description {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-20);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.subtopics-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  margin-top: var(--spacing-10);
+}
+
+.subtopic-card {
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-30);
+  background: transparent;
+  padding: var(--spacing-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-15);
+}
+
+.subtopic-name {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-21);
+  color: var(--color-text-white);
+  margin: 0;
+}
+
+.subtopic-description {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-20);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.concepts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-10);
+  margin-top: var(--spacing-10);
+}
+
+.concept-tag {
+  border: var(--border-width) solid var(--color-border-blue);
+  border-radius: var(--radius-50);
+  background: rgba(27, 144, 222, 0.1);
+  padding: var(--spacing-10) var(--spacing-20);
+}
+
+.concept-name {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-18);
+  color: var(--color-text-primary);
+}
+
+.parsed-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-30);
+}
+
+.parsed-file-card {
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-40);
+  background: transparent;
+  padding: var(--spacing-30);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.parsed-file-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-15);
+  padding-bottom: var(--spacing-20);
+  border-bottom: var(--border-width) solid var(--color-border-dark);
+}
+
+.parsed-file-title {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-24);
+  color: var(--color-text-white);
+  margin: 0;
+}
+
+.parsed-file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-20);
+}
+
+.meta-item {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-18);
+  color: var(--color-text-muted);
+}
+
+.parsed-file-content {
+  margin-top: var(--spacing-10);
+}
+
+.content-preview {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-20);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
