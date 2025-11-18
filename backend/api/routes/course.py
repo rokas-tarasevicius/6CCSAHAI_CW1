@@ -1,6 +1,7 @@
 """Course material API routes."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
 from typing import List, Optional, Dict, Any
 import sys
 import json

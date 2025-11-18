@@ -43,7 +43,10 @@ async def get_video_recommendations(
 ):
     """Get personalized video recommendations."""
     try:
-        course = CourseLoader.load_from_file("data/course_material.json")
+        # Resolve path relative to project root
+        project_root = Path(__file__).parent.parent.parent.parent
+        course_path = project_root / "data" / "course_material.json"
+        course = CourseLoader.load_from_file(str(course_path))
         performance = UserPerformance(**performance_data)
         
         script_gen = ScriptGenerator(MistralClient())
@@ -83,7 +86,10 @@ async def generate_video_content(
 ):
     """Generate video content for a concept."""
     try:
-        course = CourseLoader.load_from_file("data/course_material.json")
+        # Resolve path relative to project root
+        project_root = Path(__file__).parent.parent.parent.parent
+        course_path = project_root / "data" / "course_material.json"
+        course = CourseLoader.load_from_file(str(course_path))
         script_gen = ScriptGenerator(MistralClient())
         tts_service = TTSService()
         video_assembler = VideoAssembler()

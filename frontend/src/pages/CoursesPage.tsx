@@ -62,6 +62,30 @@ export default function CoursesPage() {
 
   const handleRemove = () => {
     setSelectedFile(null)
+    setError(null)
+    setSuccess(null)
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile) return
+
+    setUploading(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const result = await courseApi.uploadPdf(selectedFile)
+      if (result.success) {
+        setSuccess(result.message)
+        setSelectedFile(null)
+      } else {
+        setError(result.message || 'Upload failed')
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'Failed to upload PDF')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -121,12 +145,32 @@ export default function CoursesPage() {
 
           {selectedFile && (
             <div className="upload-actions">
-              <button className="btn-primary">
-                Upload Course
+              <button 
+                className="btn-primary" 
+                onClick={handleUpload}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : 'Upload Course'}
               </button>
-              <button className="btn-secondary" onClick={handleRemove}>
+              <button 
+                className="btn-secondary" 
+                onClick={handleRemove}
+                disabled={uploading}
+              >
                 Cancel
               </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="upload-message error">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="upload-message success">
+              {success}
             </div>
           )}
         </div>

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 """Verify that the application setup is correct."""
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 def verify_imports():
     """Test all critical imports."""
@@ -48,7 +54,7 @@ def verify_course_material():
     print("\n📚 Verifying course material...")
     
     from pathlib import Path
-    course_file = Path("data/course_material.json")
+    course_file = Path(__file__).parent.parent / "data" / "course_material.json"
     
     if course_file.exists():
         print("  ✅ Course material JSON exists")
@@ -78,10 +84,8 @@ def verify_tests():
     """Check test structure."""
     print("\n🧪 Verifying tests...")
     
-    from pathlib import Path
-    
-    unit_tests = list(Path("tests/unit").glob("test_*.py"))
-    llm_tests = list(Path("tests/llm").glob("test_*.py"))
+    unit_tests = list((project_root / "tests" / "unit").glob("test_*.py"))
+    llm_tests = list((project_root / "tests" / "llm").glob("test_*.py"))
     
     print(f"  ✅ Unit test files: {len(unit_tests)}")
     print(f"  ✅ LLM test files: {len(llm_tests)}")

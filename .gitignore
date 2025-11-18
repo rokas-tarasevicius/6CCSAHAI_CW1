@@ -50,6 +50,11 @@ assets/generated/
 *.mp3
 *.wav
 
+# Data files (keep structure, ignore uploaded files)
+data/raw/*.pdf
+data/raw/*.docx
+data/parsed_data.json
+
 # Environment variables
 .env
 .env.local
