@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from src.services.tracking.performance_tracker import PerformanceTracker
-from src.models.user_state import UserPerformance
+from src.models.user_state import ConceptScore, SubtopicScore, TopicScore, UserPerformance
 
 router = APIRouter()
 
@@ -32,6 +32,55 @@ class PerformanceResponse(BaseModel):
     topic_scores: Dict[str, dict]
 
 
+def _serialize_concept_score(concept_name: str, concept_score: ConceptScore) -> dict:
+    """Serialize a ConceptScore including metadata that the frontend can re-send."""
+    return {
+        "concept_name": concept_name,
+        "attempts": concept_score.attempts,
+        "correct": concept_score.correct,
+        "incorrect": concept_score.incorrect,
+        "accuracy": concept_score.accuracy,
+        "is_weak": concept_score.is_weak,
+        "last_attempted": concept_score.last_attempted.isoformat()
+        if concept_score.last_attempted
+        else None,
+    }
+
+
+def _serialize_subtopic_score(
+    subtopic_name: str, subtopic_score: SubtopicScore
+) -> dict:
+    """Serialize a SubtopicScore with its name and child concept data."""
+    return {
+        "subtopic_name": subtopic_name,
+        "overall_accuracy": subtopic_score.overall_accuracy,
+        "concept_scores": {
+            concept_name: _serialize_concept_score(concept_name, concept_score)
+            for concept_name, concept_score in subtopic_score.concept_scores.items()
+        },
+    }
+
+
+def _serialize_topic_score(topic_name: str, topic_score: TopicScore) -> dict:
+    """Serialize a TopicScore with its name and child subtopic data."""
+    return {
+        "topic_name": topic_name,
+        "overall_accuracy": topic_score.overall_accuracy,
+        "subtopic_scores": {
+            subtopic_name: _serialize_subtopic_score(subtopic_name, subtopic_score)
+            for subtopic_name, subtopic_score in topic_score.subtopic_scores.items()
+        },
+    }
+
+
+def _serialize_topic_scores(performance: UserPerformance) -> Dict[str, dict]:
+    """Serialize the nested topic scores dictionary including metadata."""
+    return {
+        topic_name: _serialize_topic_score(topic_name, topic_score)
+        for topic_name, topic_score in performance.topic_scores.items()
+    }
+
+
 @router.post("/record-answer", response_model=PerformanceResponse)
 async def record_answer(request: RecordAnswerRequest):
     """Record an answer and update performance."""
@@ -52,28 +101,7 @@ async def record_answer(request: RecordAnswerRequest):
             total_incorrect=tracker.performance.total_incorrect,
             trophy_score=tracker.performance.trophy_score,
             overall_accuracy=tracker.performance.overall_accuracy,
-            topic_scores={
-                topic_name: {
-                    "overall_accuracy": topic_score.overall_accuracy,
-                    "subtopic_scores": {
-                        st_name: {
-                            "overall_accuracy": st_score.overall_accuracy,
-                            "concept_scores": {
-                                c_name: {
-                                    "attempts": c_score.attempts,
-                                    "correct": c_score.correct,
-                                    "incorrect": c_score.incorrect,
-                                    "accuracy": c_score.accuracy,
-                                    "is_weak": c_score.is_weak
-                                }
-                                for c_name, c_score in st_score.concept_scores.items()
-                            }
-                        }
-                        for st_name, st_score in topic_score.subtopic_scores.items()
-                    }
-                }
-                for topic_name, topic_score in tracker.performance.topic_scores.items()
-            }
+            topic_scores=_serialize_topic_scores(tracker.performance),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to record answer: {str(e)}")

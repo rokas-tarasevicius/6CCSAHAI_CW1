@@ -61,7 +61,7 @@ fi
 # Start backend
 print_info "Starting backend server (FastAPI) on http://localhost:8000"
 cd backend
-uv run uvicorn api.main:app --reload --port 8000 > ../backend.log 2>&1 &
+uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 

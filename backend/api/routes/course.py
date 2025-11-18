@@ -24,7 +24,10 @@ class CourseResponse(BaseModel):
 async def get_course():
     """Get course material."""
     try:
-        course = CourseLoader.load_from_file("data/course_material.json")
+        # Resolve path relative to project root
+        project_root = Path(__file__).parent.parent.parent.parent
+        course_path = project_root / "data" / "course_material.json"
+        course = CourseLoader.load_from_file(str(course_path))
         return CourseResponse(
             title=course.title,
             description=course.description,

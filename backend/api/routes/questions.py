@@ -43,7 +43,10 @@ def get_course():
     """Get or load course."""
     global _course
     if _course is None:
-        _course = CourseLoader.load_from_file("data/course_material.json")
+        # Resolve path relative to project root
+        project_root = Path(__file__).parent.parent.parent.parent
+        course_path = project_root / "data" / "course_material.json"
+        _course = CourseLoader.load_from_file(str(course_path))
     return _course
 
 
