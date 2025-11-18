@@ -269,3 +269,30 @@
   margin: 0;
 }
 
+.upload-message {
+  padding: var(--spacing-20);
+  border-radius: var(--radius-40);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-21);
+  margin-top: var(--spacing-20);
+}
+
+.upload-message.error {
+  background: rgba(220, 38, 38, 0.1);
+  border: var(--border-width) solid var(--color-border-error);
+  color: var(--color-border-error);
+}
+
+.upload-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: var(--border-width) solid #22c55e;
+  color: #22c55e;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

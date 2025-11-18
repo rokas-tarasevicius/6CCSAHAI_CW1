@@ -1,3 +1,4 @@
+"""PDF/DOCX parsing service using LlamaParse."""
 import os
 import asyncio
 import json
@@ -5,7 +6,8 @@ from llama_cloud_services import LlamaParse
 from typing import List, Dict, Any
 from datetime import datetime, timezone
 
-async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict[str, Any]]:
+
+async def parse_files(file_paths: List[str], parser: LlamaParse) -> Dict[str, Dict[str, Any]]:
     """
     Asynchronously parses one or more PDF/DOCX files into plain text and attaches some
     metadata.
@@ -14,6 +16,9 @@ async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict
         file_paths (List[str]): A list of file paths to documents to parse. Each path should
                                 point to a supported file type such as ".pdf" or ".docx"
         parser (LlamaParse): LlamaParse client instance with a valid API key.
+    
+    Returns:
+        Dict[str, Dict[str, Any]]: Dictionary mapping file paths to parsed content and metadata.
     """
     results = await parser.aparse(file_paths)
     res = {}
@@ -33,9 +38,31 @@ async def parse_files(file_paths:List[str], parser:LlamaParse) -> Dict[str, Dict
             "content": text
         }
     return res
-            
-if __name__ == "__main__":
 
+
+async def parse_pdf_file(file_path: str, api_key: str) -> Dict[str, Any]:
+    """
+    Parse a single PDF file using LlamaParse.
+    
+    Args:
+        file_path: Path to the PDF file
+        api_key: LlamaCloud API key
+    
+    Returns:
+        Dict containing parsed content and metadata
+    """
+    parser = LlamaParse(
+        api_key=api_key,
+        num_workers=4,
+        verbose=True,
+        language="en"
+    )
+    result = await parse_files([file_path], parser)
+    return result.get(file_path, {})
+
+
+if __name__ == "__main__":
+    """CLI entry point for batch parsing."""
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY", None)
     assert LLAMA_CLOUD_API_KEY is not None, "Please provide an environmental variable for 'LLAMA_CLOUD_API_KEY'"
 
@@ -45,9 +72,9 @@ if __name__ == "__main__":
         verbose=True,
         language="en"
     )
-    file_names:List[str] = [
-        "LLMs.pdf",
-        "Transformers.pdf"
+    file_names: List[str] = [
+        "data/raw/LLMs.pdf",
+        "data/raw/Transformers.pdf"
     ]
     res = asyncio.run(
         parse_files(
@@ -57,5 +84,6 @@ if __name__ == "__main__":
     )
     
     print(json.dumps(res, indent=4))
-    with open(f"parsed_data.json", "w") as f:
+    with open("data/parsed_data.json", "w") as f:
         json.dump(res, f, indent=4)
+

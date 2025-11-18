@@ -8,11 +8,24 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 300000, // 5 minutes timeout for file uploads
 })
 
 export const courseApi = {
   getCourse: async (): Promise<Course> => {
     const response = await api.get<Course>('/course/')
+    return response.data
+  },
+  
+  uploadPdf: async (file: File): Promise<{ success: boolean; message: string; data?: any }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/course/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 300000, // 5 minutes for large file uploads
+    })
     return response.data
   },
 }
