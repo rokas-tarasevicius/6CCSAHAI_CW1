@@ -36,9 +36,11 @@ coursework_1/
 
 - Python 3.11+
 - UV package manager
+- Node.js and npm (for frontend)
 - Mistral API key
 - (Optional) ElevenLabs API key for TTS
 - (Optional) FFmpeg for video generation
+- (Optional) Minecraft source video for reel generation
 
 ### Installation
 
@@ -68,6 +70,36 @@ cd coursework_1
    
    Optional:
    - `ELEVENLABS_API_KEY`: Your ElevenLabs API key (for video generation)
+   - `MINECRAFT_REEL_SOURCE`: Path to Minecraft source video (defaults to `videos/minecraft_source.mp4`)
+
+### Video Setup (Optional - for AI Reel Generation)
+
+If you want to use the AI reel video generation feature:
+
+1. **Install FFmpeg** (required for video processing):
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install ffmpeg
+   
+   # macOS
+   brew install ffmpeg
+   
+   # Windows
+   # Download from https://ffmpeg.org/download.html
+   ```
+
+2. **Add Minecraft source video**:
+   - Place your Minecraft gameplay video at `videos/minecraft_source.mp4`
+   - Or set `MINECRAFT_REEL_SOURCE` in `.env` to point to your video file
+   - The video will be used as background footage for generated reels
+
+3. **Pre-scale video (recommended for faster generation)**:
+   ```bash
+   uv run python videos/pre_scaler.py
+   ```
+   This pre-processes the source video to the target resolution (1280x720), making video assembly much faster. The video assembler will automatically use the pre-scaled version if it exists.
+
+**Note**: Video generation will work without pre-scaling, but it will be slower as FFmpeg will scale the video during each generation.
 
 ## Usage
 
@@ -164,9 +196,12 @@ The platform uses a JSON file for course content. The default course covers Pyth
 
 1. Identify weak concepts from performance data
 2. Generate educational script using Mistral AI
-3. Convert script to speech (TTS)
-4. Combine audio with static images using FFmpeg
-5. Recommend based on relevance to learning needs
+3. Convert script to speech (TTS) using ElevenLabs
+4. Generate subtitles with word-by-word highlighting
+5. Combine audio with Minecraft source video using FFmpeg
+6. Recommend based on relevance to learning needs
+
+**Performance Tip**: Run `videos/pre_scaler.py` once to pre-scale your source video. This makes video generation 2-3x faster by avoiding scaling during each video creation.
 
 ## Technology Stack
 

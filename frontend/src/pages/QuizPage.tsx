@@ -7,7 +7,6 @@ import QuestionCard from '../components/QuestionCard'
 import ScorePanel from '../components/ScorePanel'
 import './QuizPage.css'
 
-
 export default function QuizPage() {
   const { performance, setPerformance } = usePerformanceStore()
   const [question, setQuestion] = useState<Question | null>(null)

@@ -22,7 +22,10 @@ class CourseLoader:
             FileNotFoundError: If file doesn't exist
             ValueError: If JSON is invalid or doesn't match schema
         """
-        path = Path(file_path)
+        if isinstance(file_path, Path):
+            path = file_path
+        else:
+            path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Course material file not found: {file_path}")
         

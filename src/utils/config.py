@@ -19,13 +19,30 @@ class Config:
     
     # ElevenLabs API
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-    ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Default voice
+    # Custom voice ID (optional) - if set, will try this first, fallback to default
+    ELEVENLABS_CUSTOM_VOICE_ID = os.getenv("ELEVENLABS_CUSTOM_VOICE_ID", "")
+    ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Default voice (fallback)
     
     # Video Generation
     VIDEO_WIDTH = 1280
     VIDEO_HEIGHT = 720
     VIDEO_FPS = 24
     VIDEO_CODEC = "libx264"
+    
+    # Short-form Reel Settings
+    REEL_MODE = True  # Enable reel-optimized generation
+    REEL_DURATION_TARGET_MIN = 15  # Minimum duration in seconds
+    REEL_DURATION_TARGET_MAX = 60  # Maximum duration in seconds
+    REEL_WORDS_PER_MINUTE = 150  # Speaking rate for duration estimation
+    MINECRAFT_REEL_SOURCE = os.getenv(
+        "MINECRAFT_REEL_SOURCE",
+        str(Path(__file__).parent.parent.parent / "videos" / "minecraft_source.mp4")
+    )
+    REEL_SUBTITLE_FONT = os.getenv("REEL_SUBTITLE_FONT", "DejaVuSans-Bold")
+    REEL_SUBTITLE_FONT_SIZE = int(os.getenv("REEL_SUBTITLE_FONT_SIZE", "56"))
+    REEL_SUBTITLE_WRAP_CHARS = int(os.getenv("REEL_SUBTITLE_WRAP_CHARS", "40"))
+    REEL_SUBTITLE_MARGIN_V = int(os.getenv("REEL_SUBTITLE_MARGIN_V", "60"))
+    REEL_SUBTITLE_MAX_LINES = int(os.getenv("REEL_SUBTITLE_MAX_LINES", "5"))
     
     # LLM Settings
     TEMPERATURE = 0.7

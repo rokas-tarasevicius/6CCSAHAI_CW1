@@ -55,6 +55,9 @@ export interface VideoContent {
   script: string
   duration_seconds: number
   relevance_score: number
+  audio_path?: string
+  video_path?: string
+  video_url?: string
 }
 
 export interface Course {

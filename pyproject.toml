@@ -15,7 +15,10 @@ dependencies = [
     "elevenlabs>=0.2.0",
     "numpy>=1.24.0",
     "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
     "llama-cloud-services>=0.6.81",
+    "requests>=2.31.0",
 ]
 
 [dependency-groups]

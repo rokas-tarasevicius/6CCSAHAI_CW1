@@ -69,8 +69,28 @@ export default function VideoFeedPage() {
                 <h3>{rec.concept}</h3>
                 <p className="video-meta">{rec.topic} → {rec.subtopic}</p>
                 {video ? (
-                  <div className="video-script">
-                    <p>{video.script}</p>
+                  <div className="video-content-display">
+                    {video.video_url ? (
+                      <div className="video-player-container">
+                        <video
+                          controls
+                          className="video-player"
+                          src={video.video_url}
+                          style={{ width: '100%', maxWidth: '800px', borderRadius: '8px' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    ) : null}
+                    <div className="video-script">
+                      <h4>Script:</h4>
+                      <p>{video.script}</p>
+                      {video.duration_seconds && (
+                        <p className="video-duration">
+                          Duration: {Math.round(video.duration_seconds)}s
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -78,7 +98,7 @@ export default function VideoFeedPage() {
                     className="btn-primary"
                     disabled={loading}
                   >
-                    Generate Video Content
+                    {loading ? 'Generating...' : 'Generate Video Content'}
                   </button>
                 )}
               </div>

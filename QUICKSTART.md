@@ -123,6 +123,32 @@ Required:
 
 Optional:
 - `ELEVENLABS_API_KEY`: Your ElevenLabs API key (for video generation)
+- `MINECRAFT_REEL_SOURCE`: Path to Minecraft source video (defaults to `videos/minecraft_source.mp4`)
+
+## Video Setup (Optional - for AI Reel Generation)
+
+If you want to use the AI reel video generation feature:
+
+1. **Install FFmpeg** (required for video processing):
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install ffmpeg
+   
+   # macOS
+   brew install ffmpeg
+   ```
+
+2. **Add Minecraft source video**:
+   - Place your Minecraft gameplay video at `videos/minecraft_source.mp4`
+   - Or set `MINECRAFT_REEL_SOURCE` in `.env` to point to your video file
+
+3. **Pre-scale video (recommended for faster generation)**:
+   ```bash
+   uv run python videos/pre_scaler.py
+   ```
+   This pre-processes the source video to 1280x720, making video assembly 2-3x faster. The video assembler will automatically use the pre-scaled version if it exists.
+
+**Note**: Video generation works without pre-scaling, but will be slower.
 
 ## Customizing Course Material
 
@@ -172,6 +198,8 @@ Edit `data/course_material.json` to change the course content:
 **Video generation shows warning:**
 - Video generation requires ElevenLabs API key for TTS
 - Without API key, you'll see script previews only
+- FFmpeg must be installed for video assembly
+- Minecraft source video should be placed at `videos/minecraft_source.mp4` (or set `MINECRAFT_REEL_SOURCE` in `.env`)
 
 **Progress resets on refresh:**
 - This is expected (POC uses in-memory storage)

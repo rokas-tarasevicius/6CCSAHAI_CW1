@@ -20,7 +20,8 @@ class ScriptGenerator:
         self,
         topic: str,
         subtopic: str,
-        concept: Concept
+        concept: Concept,
+        content_context: str = ""
     ) -> str:
         """Generate a video script for a concept.
         
@@ -28,17 +29,25 @@ class ScriptGenerator:
             topic: Topic name
             subtopic: Subtopic name
             concept: Concept object
+            content_context: Optional parsed content from PDFs for additional context
             
         Returns:
             Generated script text
         """
         try:
+            # Enhance concept description with parsed content if available
+            enhanced_description = concept.description
+            if content_context:
+                # Add relevant excerpt from parsed content (first 2000 chars for context)
+                content_excerpt = content_context[:2000] + "..." if len(content_context) > 2000 else content_context
+                enhanced_description = f"{concept.description}\n\nRelevant content from course material:\n{content_excerpt}"
+            
             script = self.client.generate_with_template(
                 VIDEO_SCRIPT_PROMPT,
                 topic=topic,
                 subtopic=subtopic,
                 concept_name=concept.name,
-                concept_description=concept.description
+                concept_description=enhanced_description
             )
             
             return script.strip()

@@ -46,9 +46,16 @@ frontend.log
 
 # Generated content
 assets/generated/
+
+# Video generation output (exclude all generated media files)
+
 *.mp4
 *.mp3
 *.wav
+*.jpg
+*.png
+*.jpg
+*.png
 
 # Data files (keep structure, ignore uploaded files)
 data/raw/*.pdf
@@ -78,3 +85,5 @@ frontend/yarn-error.log*
 
 # UV lock file (keep it)
 !uv.lock
+
+
