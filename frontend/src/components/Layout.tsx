@@ -20,19 +20,19 @@ export default function Layout({ children }: LayoutProps) {
               to="/courses"
               className={location.pathname === '/courses' ? 'active' : ''}
             >
-              Courses
+              Upload
             </Link>
             <Link
               to="/"
               className={location.pathname === '/' ? 'active' : ''}
             >
-              Dashboard
+              Quiz
             </Link>
             <Link
               to="/videos"
               className={location.pathname === '/videos' ? 'active' : ''}
             >
-              Profile
+              AI slop
             </Link>
           </div>
         </div>
