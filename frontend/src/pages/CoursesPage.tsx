@@ -203,7 +203,9 @@ export default function CoursesPage() {
                     <div className="parsed-file-meta">
                       <span className="meta-item">Type: {fileData.metadata.file_type.toUpperCase()}</span>
                       <span className="meta-item">Size: {(fileData.metadata.content_length / 1024).toFixed(2)} KB</span>
+                      <span className="meta-item">Content Length: {fileData.metadata.content_length.toLocaleString()} chars</span>
                       <span className="meta-item">Language: {fileData.metadata.language}</span>
+                      <span className="meta-item">Extracted: {new Date(fileData.metadata.extraction_timestamp).toLocaleString()} {fileData.metadata.timezone.toUpperCase()}</span>
                     </div>
                   </div>
                   <div className="parsed-file-content">
