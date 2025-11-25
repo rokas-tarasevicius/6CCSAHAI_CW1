@@ -118,13 +118,11 @@ export const performanceApi = {
 
 export const videosApi = {
   getRecommendations: async (
-    performanceData: Partial<Performance>,
     maxVideos: number = 5
   ): Promise<VideoRecommendation[]> => {
     const response = await api.post<{ recommendations: VideoRecommendation[] }>(
       '/videos/recommendations',
       {
-        performance_data: performanceData,
         max_videos: maxVideos,
       }
     )

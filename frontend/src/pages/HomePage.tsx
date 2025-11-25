@@ -7,10 +7,6 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <div className="subject-header">
-        <h1 className="subject-title">HUMAN AI INTERACTION / PROTOTYPING</h1>
-      </div>
-
       {performance.total_questions_answered === 0 ? (
         <div className="welcome-section">
           <p>Welcome to the Adaptive Learning Platform</p>

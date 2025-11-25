@@ -161,10 +161,6 @@ export default function QuizPage() {
 
   return (
     <div className="quiz-page">
-      <div className="subject-header">
-        <h1 className="subject-title">HUMAN AI INTERACTION / PROTOTYPING</h1>
-      </div>
-
       <div className="quiz-content">
         <div className="quiz-left-pane">
           <div className="question-section">

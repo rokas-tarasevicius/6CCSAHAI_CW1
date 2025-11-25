@@ -3,13 +3,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import Optional
-import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add project root to path for imports
+import sys
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.api.routes import questions, performance, videos, course
+from backend.quiz_service.routes import questions, performance
+from backend.video_service.routes import videos
+from backend.course_service.routes import course
 
 app = FastAPI(
     title="Adaptive Learning Platform API",
