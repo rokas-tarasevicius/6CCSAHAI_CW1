@@ -176,7 +176,9 @@ async def generate_question(
         
         # Select next concept
         topic, subtopic, concept, difficulty = adapter.select_next_concept()
-        
+        # topic, subtopic, concept, difficulty = adapter._select_random_concept(all_concepts=adapter.course.get_all_concepts()) # TODO: For testing use random
+        print(f"Selected concept: Topic='{topic}', Subtopic='{subtopic}', Concept='{concept.name}', Difficulty='{difficulty}'")
+
         # Get content context from parsed data
         content_context = ""
         topic_obj = next((t for t in course.topics if t.name == topic), None)

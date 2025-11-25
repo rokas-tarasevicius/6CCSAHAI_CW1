@@ -4,7 +4,8 @@ from typing import Optional
 from backend.quiz_service.models.question import MultipleChoiceQuestion, Answer, DifficultyLevel
 from backend.course_service.models.course import Concept
 from backend.shared.services.llm.mistral_client import MistralClient
-from backend.shared.services.llm.prompts import QUESTION_GENERATION_PROMPT
+from backend.shared.services.llm.prompts import QUESTION_GENERATION_PROMPT, CHOICE_GENERATION_PROMPT
+from backend.shared.services.llm.mcq_prompts import KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION, ANSWER_GENERATION_SYSTEM_INSTRUCTION
 from backend.quiz_service.services.question.cache import get_cache
 from backend.shared.utils.config import Config
 
@@ -59,48 +60,82 @@ class QuestionGenerator:
         num_answers = max(Config.MIN_ANSWERS, min(Config.MAX_ANSWERS, num_answers))
         
         # Prepare the prompt
-        prompt_vars = {
+        common_prompt_vars = {
             "topic": topic,
             "subtopic": subtopic,
             "concept_name": concept.name,
             "concept_description": concept.description,
             "content_context": f"Additional context: {content_context}" if content_context else "",
             "difficulty": difficulty.value,
-            "num_answers": num_answers
+        }
+        question_prompt_vars = {
+            "system_instruction": KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION,
+            **common_prompt_vars
+        }
+        choice_prompt_vars = {
+            "system_instruction": ANSWER_GENERATION_SYSTEM_INSTRUCTION,
+            **common_prompt_vars,
         }
         
         # Generate question using LLM
         try:
-            response = self.client.generate_with_template(
+            question_response = self.client.generate_with_template(
                 QUESTION_GENERATION_PROMPT,
-                **prompt_vars
+                **question_prompt_vars
             )
-            
+
+            print(f"Raw question response: {question_response}")
+
             # Parse the response as JSON
             import json
             # Try to extract JSON from the response
-            if "```json" in response:
-                start = response.find("```json") + 7
-                end = response.find("```", start)
-                json_str = response[start:end].strip()
+            if "```json" in question_response:
+                start = question_response.find("```json") + 7
+                end = question_response.find("```", start)
+                json_str = question_response[start:end].strip()
                 question_data = json.loads(json_str)
-            elif "{" in response:
+            elif "{" in question_response:
                 # Find the JSON object in the response
-                start = response.find("{")
-                end = response.rfind("}") + 1
-                json_str = response[start:end]
+                start = question_response.find("{")
+                end = question_response.rfind("}") + 1
+                json_str = question_response[start:end]
                 question_data = json.loads(json_str)
             else:
                 raise ValueError("No JSON found in response")
             
+            print(f"Generated question data: {question_data}")
+
+            choices_response = self.client.generate_with_template(
+                CHOICE_GENERATION_PROMPT,
+                question=question_data["question"],
+                **choice_prompt_vars,
+            )
+            print(f"Raw choices response: {choices_response}")
+            # Parse choices response
+            if "```json" in choices_response:
+                start = choices_response.find("```json") + 7
+                end = choices_response.find("```", start)
+                json_str = choices_response[start:end].strip()
+                choices_data = json.loads(json_str)
+            elif "{" in choices_response:
+                start = choices_response.find("{")
+                end = choices_response.rfind("}") + 1
+                json_str = choices_response[start:end]
+                choices_data = json.loads(json_str)
+            else:
+                raise ValueError("No JSON found in choices response")
+            
+            print(f"Generated choices data: {choices_data}")
+
+            
             # Validate and create question
-            answers = [Answer(**ans) for ans in question_data["answers"]]
+            answers = [Answer(**ans) for ans in choices_data["answers"]]
             
             # Ensure at least one correct answer
             if not any(ans.is_correct for ans in answers):
-                answers[0].is_correct = True
+                answers[0].is_correct = True # TODO: Set first answer as correct arbitrarily (NEEDS BETTER HANDLING)
             
-            # Ensure only one correct answer
+            # Ensure only one correct answer TODO: Sets first correct answer as correct, others as false (NEEDS BETTER HANDLING)
             correct_count = sum(1 for ans in answers if ans.is_correct)
             if correct_count > 1:
                 first_correct_found = False
@@ -111,13 +146,13 @@ class QuestionGenerator:
                         ans.is_correct = False
             
             question = MultipleChoiceQuestion(
-                question_text=question_data["question_text"],
+                question_text=question_data["question"],
                 answers=answers,
                 topic=topic,
                 subtopic=subtopic,
                 concepts=[concept.name],
                 difficulty=difficulty,
-                explanation=question_data.get("explanation", "")
+                explanation="", # question_data.get("explanation", "")
             )
             
             # Validate the generated question
