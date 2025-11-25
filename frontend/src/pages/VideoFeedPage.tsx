@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { videosApi } from '../services/api'
+import { Link } from 'react-router-dom'
+import { videosApi, courseApi } from '../services/api'
 import type { VideoRecommendation, VideoContent } from '../types'
 import './VideoFeedPage.css'
 
 export default function VideoFeedPage() {
+  const [hasContent, setHasContent] = useState<boolean | null>(null)
   const [recommendations, setRecommendations] = useState<VideoRecommendation[]>([])
   const [generatedVideos, setGeneratedVideos] = useState<Record<string, VideoContent>>({})
   const [loading, setLoading] = useState(false)
@@ -11,8 +13,22 @@ export default function VideoFeedPage() {
   const processedRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    loadRecommendations()
+    checkContentAndLoad()
   }, [])
+
+  const checkContentAndLoad = async () => {
+    try {
+      const data = await courseApi.getCourse()
+      const hasFiles = data.files && Object.keys(data.files).length > 0
+      setHasContent(hasFiles)
+      
+      if (hasFiles) {
+        loadRecommendations()
+      }
+    } catch (err) {
+      setHasContent(false)
+    }
+  }
 
   useEffect(() => {
     // Automatically generate videos for all recommendations when they're loaded
@@ -68,7 +84,16 @@ export default function VideoFeedPage() {
 
   return (
     <div className="video-feed-page">
-      {loading ? (
+      {hasContent === false ? (
+        <div className="empty-state">
+          <h2>No Course Material Found</h2>
+          <p>You need to upload course materials before we can generate video recommendations.</p>
+          <p>Please upload PDF files to get started with personalized video content.</p>
+          <Link to="/courses" className="btn-primary">
+            Upload Course Material
+          </Link>
+        </div>
+      ) : loading || hasContent === null ? (
         <div className="empty-state">
           <p>Loading video recommendations...</p>
         </div>
