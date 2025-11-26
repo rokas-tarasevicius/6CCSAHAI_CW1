@@ -14,6 +14,18 @@ export interface Question {
   explanation: string
 }
 
+export interface QuizQuestion {
+  id: string
+  question_text: string
+  answers: AnswerOption[]
+  topic: string
+  subtopic: string
+  concepts: string[]
+  difficulty: string
+  explanation: string
+  created_at?: string
+}
+
 export interface Performance {
   total_questions_answered: number
   total_correct: number
@@ -97,6 +109,7 @@ export interface ParsedFileMetadata {
 export interface ParsedFileData {
   metadata: ParsedFileMetadata
   content: string
+  quiz?: QuizQuestion[]  // Quiz questions for this file
 }
 
 export interface ParsedDataResponse {

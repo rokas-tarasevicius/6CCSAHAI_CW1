@@ -434,6 +434,56 @@ export default function CoursesPage() {
                       {fileData.content.length > 500 ? '...' : ''}
                     </p>
                   </div>
+                  
+                  {/* Quiz section */}
+                  <div className="parsed-file-quiz">
+                    {fileData.quiz && fileData.quiz.length > 0 ? (
+                      <div className="quiz-available">
+                        <div className="quiz-info">
+                          <span className="quiz-icon">🧠</span>
+                          <span className="quiz-text">Quiz available: {fileData.quiz.length} questions</span>
+                        </div>
+                        <div className="quiz-actions">
+                          <button className="btn-quiz-take">
+                            Take Quiz
+                          </button>
+                          <button 
+                            className="btn-quiz-regenerate"
+                            onClick={async () => {
+                              try {
+                                await courseApi.generateQuiz(filePath, 5)
+                                await loadCourse() // Refresh to show new quiz
+                              } catch (err) {
+                                console.error('Failed to regenerate quiz:', err)
+                              }
+                            }}
+                          >
+                            Regenerate Quiz
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="quiz-unavailable">
+                        <div className="quiz-info">
+                          <span className="quiz-icon">❓</span>
+                          <span className="quiz-text">No quiz available</span>
+                        </div>
+                        <button 
+                          className="btn-quiz-generate"
+                          onClick={async () => {
+                            try {
+                              await courseApi.generateQuiz(filePath, 5)
+                              await loadCourse() // Refresh to show new quiz
+                            } catch (err) {
+                              console.error('Failed to generate quiz:', err)
+                            }
+                          }}
+                        >
+                          Generate Quiz
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

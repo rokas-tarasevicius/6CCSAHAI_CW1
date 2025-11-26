@@ -739,3 +739,115 @@
   font-size: var(--font-size-18);
 }
 
+/* Quiz Section Styles */
+.parsed-file-quiz {
+  margin-top: var(--spacing-20);
+  padding-top: var(--spacing-20);
+  border-top: var(--border-width) solid var(--color-border-dark);
+}
+
+.quiz-available, .quiz-unavailable {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-20);
+  flex-wrap: wrap;
+}
+
+.quiz-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-10);
+}
+
+.quiz-icon {
+  font-size: var(--font-size-24);
+}
+
+.quiz-text {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-18);
+  color: var(--color-text-primary);
+}
+
+.quiz-actions {
+  display: flex;
+  gap: var(--spacing-15);
+  flex-wrap: wrap;
+}
+
+.btn-quiz-take, .btn-quiz-generate, .btn-quiz-regenerate {
+  padding: var(--spacing-10) var(--spacing-20);
+  border: var(--border-width) solid;
+  border-radius: var(--radius-20);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-16);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.btn-quiz-take {
+  border-color: var(--color-accent-blue);
+  color: var(--color-accent-blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.btn-quiz-take:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--color-text-blue);
+  color: var(--color-text-blue);
+  transform: translateY(-1px);
+}
+
+.btn-quiz-generate {
+  border-color: var(--color-accent-green);
+  color: var(--color-accent-green);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.btn-quiz-generate:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  color: #10b981;
+  transform: translateY(-1px);
+}
+
+.btn-quiz-regenerate {
+  border-color: var(--color-accent-orange);
+  color: var(--color-accent-orange);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.btn-quiz-regenerate:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: #f59e0b;
+  color: #f59e0b;
+  transform: translateY(-1px);
+}
+
+/* Responsive quiz section */
+@media (max-width: 768px) {
+  .quiz-available, .quiz-unavailable {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .quiz-actions {
+    justify-content: center;
+  }
+  
+  .btn-quiz-take, .btn-quiz-generate, .btn-quiz-regenerate {
+    min-width: auto;
+    flex: 1;
+  }
+}
+

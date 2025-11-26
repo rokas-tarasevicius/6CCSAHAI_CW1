@@ -28,6 +28,11 @@ export const courseApi = {
     })
     return response.data
   },
+  
+  generateQuiz: async (fileKey: string, numQuestions: number = 5): Promise<{ success: boolean; message: string; data?: any }> => {
+    const response = await api.post(`/course/generate-quiz/${encodeURIComponent(fileKey)}?num_questions=${numQuestions}`)
+    return response.data
+  },
 }
 
 export const questionsApi = {
