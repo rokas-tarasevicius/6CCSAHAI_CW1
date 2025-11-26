@@ -126,7 +126,7 @@
   font-family: var(--font-family);
   font-weight: var(--font-weight-light);
   font-size: var(--font-size-20);
-  color: var(--color-text-muted);
+  color: var (--color-text-muted);
 }
 
 .remove-button {
@@ -480,6 +480,38 @@
   background: rgba(239, 68, 68, 0.1);
   border: var(--border-width) solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
+}
+
+/* Individual Success Messages */
+.upload-message.individual-success {
+  background: rgba(59, 130, 246, 0.1);
+  border: var(--border-width) solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.individual-success-title {
+  font-weight: var(--font-weight-regular);
+  margin-bottom: var(--spacing-10);
+  font-size: var(--font-size-19);
+}
+
+.individual-success-item {
+  margin-left: var(--spacing-15);
+  margin-bottom: var(--spacing-5);
+  font-size: var(--font-size-17);
+}
+
+.individual-success-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Batch Success Messages */
+.upload-message.batch-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: var(--border-width) solid rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-19);
 }
 
 /* Processing Section Styles */

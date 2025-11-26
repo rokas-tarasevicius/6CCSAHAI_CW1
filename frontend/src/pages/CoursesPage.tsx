@@ -12,6 +12,8 @@ export default function CoursesPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [individualSuccess, setIndividualSuccess] = useState<string[]>([])
+  const [batchSuccess, setBatchSuccess] = useState<string | null>(null)
   const [_, setRefreshing] = useState(false)
   const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
   
@@ -138,6 +140,8 @@ export default function CoursesPage() {
         // Clear messages when new files are added
         setUploadError(null)
         setSuccess(null)
+        setIndividualSuccess([])
+        setBatchSuccess(null)
       }
     }
   }
@@ -152,6 +156,8 @@ export default function CoursesPage() {
         // Clear messages when new files are added
         setUploadError(null)
         setSuccess(null)
+        setIndividualSuccess([])
+        setBatchSuccess(null)
       }
     }
     // Reset the input value so the same files can be selected again
@@ -166,6 +172,8 @@ export default function CoursesPage() {
     }
     setUploadError(null)
     setSuccess(null)
+    setIndividualSuccess([])
+    setBatchSuccess(null)
   }
 
   const handleUpload = async () => {
@@ -178,6 +186,8 @@ export default function CoursesPage() {
     setSelectedFiles([])
     setUploadError(null)
     setSuccess(null)
+    setIndividualSuccess([])
+    setBatchSuccess(null)
     // Remove setUploading(true) to allow consecutive uploads
     
     // Process files individually so we can refresh after each successful upload
@@ -196,6 +206,9 @@ export default function CoursesPage() {
         if (result.success) {
           // Mark upload as successful
           finishUpload(uploadId, true)
+          
+          // Add to individual success messages immediately
+          setIndividualSuccess(prev => [...prev, `✓ ${file.name} uploaded successfully`])
           
           // Immediately refresh course data for this successful upload
           console.log(`File ${file.name} uploaded successfully, triggering refresh...`)
@@ -220,12 +233,27 @@ export default function CoursesPage() {
       const successfulUploads = results.filter(r => r.success)
       const failedUploads = results.filter(r => !r.success)
       
-      if (successfulUploads.length > 0) {
-        setSuccess(`Successfully uploaded ${successfulUploads.length} file(s): ${successfulUploads.map(r => r.fileName).join(', ')}.`)
+      // Set batch completion message if multiple files were uploaded
+      if (filesToUpload.length > 1) {
+        if (successfulUploads.length > 0 && failedUploads.length === 0) {
+          setBatchSuccess(`✓ All ${successfulUploads.length} files uploaded successfully!`)
+        } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
+          setBatchSuccess(`✓ ${successfulUploads.length} of ${filesToUpload.length} files uploaded successfully`)
+        }
+        
+        // Clear individual success messages after showing batch summary for a moment
+        setTimeout(() => {
+          setIndividualSuccess([])
+        }, 3000)
+      } else if (successfulUploads.length === 1) {
+        // For single file, use the individual success message as the main success
+        setSuccess(`✓ ${successfulUploads[0].fileName} uploaded successfully!`)
+        setIndividualSuccess([]) // Clear individual success for single file
       }
       
       if (failedUploads.length > 0) {
-        setUploadError(`Failed to upload ${failedUploads.length} file(s): ${failedUploads.map(r => `${r.fileName} (${r.message})`).join(', ')}`)
+        const errorMessages = failedUploads.map(r => `• ${r.fileName}: ${r.message}`).join('\n')
+        setUploadError(`Failed uploads:\n${errorMessages}`)
       }
     } catch (err: any) {
       console.error('Error during bulk upload:', err)
@@ -350,10 +378,32 @@ export default function CoursesPage() {
 
           {uploadError && (
             <div className="upload-message error">
-              {uploadError}
+              {uploadError.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
           )}
 
+          {/* Individual success messages for real-time feedback */}
+          {individualSuccess.length > 0 && (
+            <div className="upload-message success individual-success">
+              <div className="individual-success-title">Upload Progress:</div>
+              {individualSuccess.map((message, index) => (
+                <div key={index} className="individual-success-item">
+                  {message}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Batch completion message */}
+          {batchSuccess && (
+            <div className="upload-message success batch-success">
+              {batchSuccess}
+            </div>
+          )}
+
+          {/* Single file success message */}
           {success && (
             <div className="upload-message success">
               {success}
