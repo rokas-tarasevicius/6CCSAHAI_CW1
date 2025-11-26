@@ -164,12 +164,15 @@ export default function CoursesPage() {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return
 
-    setUploading(true)
+    // Clear the UI state immediately - files, messages, and uploading state
+    const filesToUpload = [...selectedFiles] // Copy the files before clearing
+    setSelectedFiles([])
     setUploadError(null)
     setSuccess(null)
+    setUploading(true)
     
     // Process files individually so we can refresh after each successful upload
-    const uploadPromises = selectedFiles.map(async (file) => {
+    const uploadPromises = filesToUpload.map(async (file) => {
       const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       
       // Start global upload tracking
@@ -209,7 +212,6 @@ export default function CoursesPage() {
       const failedUploads = results.filter(r => !r.success)
       
       if (successfulUploads.length > 0) {
-        setSelectedFiles([])
         setSuccess(`Successfully uploaded ${successfulUploads.length} file(s): ${successfulUploads.map(r => r.fileName).join(', ')}.`)
       }
       
