@@ -10,7 +10,6 @@ export default function CoursesPage() {
   const [parsedData, setParsedData] = useState<ParsedDataResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [_, setRefreshing] = useState(false)
@@ -134,7 +133,11 @@ export default function CoursesPage() {
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
+        console.log(`Adding ${files.length} files via drag & drop:`, files.map(f => f.name))
         setSelectedFiles(prevFiles => [...prevFiles, ...files])
+        // Clear messages when new files are added
+        setUploadError(null)
+        setSuccess(null)
       }
     }
   }
@@ -144,7 +147,11 @@ export default function CoursesPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
+        console.log(`Adding ${files.length} files via file input:`, files.map(f => f.name))
         setSelectedFiles(prevFiles => [...prevFiles, ...files])
+        // Clear messages when new files are added
+        setUploadError(null)
+        setSuccess(null)
       }
     }
     // Reset the input value so the same files can be selected again
@@ -164,12 +171,14 @@ export default function CoursesPage() {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return
 
-    // Clear the UI state immediately - files, messages, and uploading state
+    console.log(`Starting upload of ${selectedFiles.length} files:`, selectedFiles.map(f => f.name))
+
+    // Clear the UI state immediately - files and messages, but NOT uploading state
     const filesToUpload = [...selectedFiles] // Copy the files before clearing
     setSelectedFiles([])
     setUploadError(null)
     setSuccess(null)
-    setUploading(true)
+    // Remove setUploading(true) to allow consecutive uploads
     
     // Process files individually so we can refresh after each successful upload
     const uploadPromises = filesToUpload.map(async (file) => {
@@ -221,9 +230,9 @@ export default function CoursesPage() {
     } catch (err: any) {
       console.error('Error during bulk upload:', err)
       setUploadError('An unexpected error occurred during upload')
-    } finally {
-      setUploading(false)
     }
+    // Remove finally block that sets uploading to false
+    // This allows consecutive uploads without waiting for the previous batch to complete
   }
 
   return (
@@ -282,7 +291,6 @@ export default function CoursesPage() {
                       e.preventDefault()
                       handleRemove()
                     }}
-                    disabled={uploading}
                   >
                     Clear All
                   </button>
@@ -324,9 +332,9 @@ export default function CoursesPage() {
               <button 
                 className="btn-primary" 
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={selectedFiles.length === 0}
               >
-                {uploading ? `Uploading ${selectedFiles.length} file(s)...` : `Upload ${selectedFiles.length} Course${selectedFiles.length === 1 ? '' : 's'}`}
+                {`Upload ${selectedFiles.length} Course${selectedFiles.length === 1 ? '' : 's'}`}
               </button>
               <button 
                 className="btn-secondary" 
@@ -334,7 +342,6 @@ export default function CoursesPage() {
                   e.preventDefault()
                   handleRemove()
                 }}
-                disabled={uploading}
               >
                 Cancel
               </button>
