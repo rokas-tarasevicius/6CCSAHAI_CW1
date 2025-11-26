@@ -12,13 +12,11 @@ export default function CoursesPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [individualSuccess, setIndividualSuccess] = useState<string[]>([])
-  const [batchSuccess, setBatchSuccess] = useState<string | null>(null)
   const [_, setRefreshing] = useState(false)
   const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
   
-  // Use global upload context for persistent upload tracking
-  const { uploads, startUpload, updateUpload, finishUpload } = useUpload()
+  // Use global upload context for persistent upload tracking and success messages
+  const { uploads, successMessages, startUpload, updateUpload, finishUpload, addSuccessMessage, clearSuccessMessages } = useUpload()
 
   useEffect(() => {
     loadCourse()
@@ -140,8 +138,7 @@ export default function CoursesPage() {
         // Clear messages when new files are added
         setUploadError(null)
         setSuccess(null)
-        setIndividualSuccess([])
-        setBatchSuccess(null)
+        clearSuccessMessages()
       }
     }
   }
@@ -156,8 +153,7 @@ export default function CoursesPage() {
         // Clear messages when new files are added
         setUploadError(null)
         setSuccess(null)
-        setIndividualSuccess([])
-        setBatchSuccess(null)
+        clearSuccessMessages()
       }
     }
     // Reset the input value so the same files can be selected again
@@ -172,8 +168,7 @@ export default function CoursesPage() {
     }
     setUploadError(null)
     setSuccess(null)
-    setIndividualSuccess([])
-    setBatchSuccess(null)
+    clearSuccessMessages()
   }
 
   const handleUpload = async () => {
@@ -186,8 +181,7 @@ export default function CoursesPage() {
     setSelectedFiles([])
     setUploadError(null)
     setSuccess(null)
-    setIndividualSuccess([])
-    setBatchSuccess(null)
+    clearSuccessMessages()
     // Remove setUploading(true) to allow consecutive uploads
     
     // Process files individually so we can refresh after each successful upload
@@ -207,8 +201,8 @@ export default function CoursesPage() {
           // Mark upload as successful
           finishUpload(uploadId, true)
           
-          // Add to individual success messages immediately
-          setIndividualSuccess(prev => [...prev, `✓ ${file.name} uploaded successfully`])
+          // Add to persistent success messages immediately
+          addSuccessMessage(`✓ ${file.name} uploaded successfully`, 'individual')
           
           // Immediately refresh course data for this successful upload
           console.log(`File ${file.name} uploaded successfully, triggering refresh...`)
@@ -236,19 +230,13 @@ export default function CoursesPage() {
       // Set batch completion message if multiple files were uploaded
       if (filesToUpload.length > 1) {
         if (successfulUploads.length > 0 && failedUploads.length === 0) {
-          setBatchSuccess(`✓ All ${successfulUploads.length} files uploaded successfully!`)
+          addSuccessMessage(`✓ All ${successfulUploads.length} files uploaded successfully!`, 'batch')
         } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
-          setBatchSuccess(`✓ ${successfulUploads.length} of ${filesToUpload.length} files uploaded successfully`)
+          addSuccessMessage(`✓ ${successfulUploads.length} of ${filesToUpload.length} files uploaded successfully`, 'batch')
         }
-        
-        // Clear individual success messages after showing batch summary for a moment
-        setTimeout(() => {
-          setIndividualSuccess([])
-        }, 3000)
       } else if (successfulUploads.length === 1) {
-        // For single file, use the individual success message as the main success
-        setSuccess(`✓ ${successfulUploads[0].fileName} uploaded successfully!`)
-        setIndividualSuccess([]) // Clear individual success for single file
+        // For single file, the individual success message is already added above
+        // No need to add anything extra
       }
       
       if (failedUploads.length > 0) {
@@ -384,26 +372,21 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {/* Individual success messages for real-time feedback */}
-          {individualSuccess.length > 0 && (
-            <div className="upload-message success individual-success">
-              <div className="individual-success-title">Upload Progress:</div>
-              {individualSuccess.map((message, index) => (
-                <div key={index} className="individual-success-item">
-                  {message}
+          {/* Success messages from context - persistent across page navigation */}
+          {successMessages.length > 0 && (
+            <div className="upload-message success">
+              {successMessages.map((messageObj) => (
+                <div 
+                  key={messageObj.id} 
+                  className={`success-message-item ${messageObj.type}`}
+                >
+                  {messageObj.message}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Batch completion message */}
-          {batchSuccess && (
-            <div className="upload-message success batch-success">
-              {batchSuccess}
-            </div>
-          )}
-
-          {/* Single file success message */}
+          {/* Single file success message (local state, for immediate feedback) */}
           {success && (
             <div className="upload-message success">
               {success}

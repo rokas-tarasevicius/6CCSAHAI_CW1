@@ -9,19 +9,31 @@ export interface UploadProgress {
   startTime: number
 }
 
+export interface SuccessMessage {
+  id: string
+  message: string
+  timestamp: number
+  type: 'individual' | 'batch'
+}
+
 interface UploadContextType {
   uploads: UploadProgress[]
+  successMessages: SuccessMessage[]
   startUpload: (id: string, fileName: string) => void
   updateUpload: (id: string, updates: Partial<UploadProgress>) => void
   finishUpload: (id: string, success: boolean, error?: string) => void
   removeUpload: (id: string) => void
   hasActiveUploads: () => boolean
+  addSuccessMessage: (message: string, type: 'individual' | 'batch') => void
+  clearSuccessMessages: () => void
+  removeSuccessMessage: (id: string) => void
 }
 
 const UploadContext = createContext<UploadContextType | null>(null)
 
 export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uploads, setUploads] = useState<UploadProgress[]>([])
+  const [successMessages, setSuccessMessages] = useState<SuccessMessage[]>([])
 
   const startUpload = useCallback((id: string, fileName: string) => {
     setUploads(prev => [
@@ -72,13 +84,42 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return uploads.some(u => u.status === 'uploading' || u.status === 'processing')
   }, [uploads])
 
+  const addSuccessMessage = useCallback((message: string, type: 'individual' | 'batch') => {
+    const id = `success-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const newMessage: SuccessMessage = {
+      id,
+      message,
+      timestamp: Date.now(),
+      type
+    }
+    
+    setSuccessMessages(prev => [...prev, newMessage])
+    
+    // Auto-remove success messages after 10 seconds (longer than uploads for better UX)
+    setTimeout(() => {
+      setSuccessMessages(prev => prev.filter(m => m.id !== id))
+    }, 10000)
+  }, [])
+
+  const clearSuccessMessages = useCallback(() => {
+    setSuccessMessages([])
+  }, [])
+
+  const removeSuccessMessage = useCallback((id: string) => {
+    setSuccessMessages(prev => prev.filter(m => m.id !== id))
+  }, [])
+
   const value = {
     uploads,
+    successMessages,
     startUpload,
     updateUpload,
     finishUpload,
     removeUpload,
-    hasActiveUploads
+    hasActiveUploads,
+    addSuccessMessage,
+    clearSuccessMessages,
+    removeSuccessMessage
   }
 
   return (
