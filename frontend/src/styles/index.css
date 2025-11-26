@@ -21,10 +21,15 @@
   --font-weight-regular: 400;
   --font-weight-bold: 700;
   
+  --font-size-12: 12px;
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
   --font-size-20: 20px;
   --font-size-21: 21.28px;
   --font-size-24: 24px;
   --font-size-28: 28.48px;
+  --font-size-32: 32px;
   --font-size-38: 37.92px;
   --font-size-67: 67.36px;
   
@@ -39,6 +44,8 @@
   --spacing-200: 200px;
   
   /* Border Radius */
+  --radius-10: 10px;
+  --radius-20: 20px;
   --radius-40: 40px;
   --radius-50: 50px;
   

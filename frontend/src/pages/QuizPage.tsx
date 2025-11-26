@@ -161,12 +161,17 @@ export default function QuizPage() {
           <div className="quiz-progress">
             <h3>Quiz Progress</h3>
             <div className="progress-info">
-              Question {currentQuestionIndex + 1} of {allQuestions.length}
+              Question {currentQuestionIndex + 1} of {allQuestions.length}{" "}
+              <span className="progress-percentage">
+                ({Math.round((currentQuestionIndex / allQuestions.length) * 100)}%)
+              </span>
             </div>
             <div className="progress-bar">
               <div 
                 className="progress-fill" 
-                style={{ width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }}
+                style={{ 
+                  width: `${Math.round((currentQuestionIndex / allQuestions.length) * 100)}%` 
+                }}
               ></div>
             </div>
           </div>

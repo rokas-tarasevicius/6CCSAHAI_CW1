@@ -150,21 +150,36 @@
   font-size: var(--font-size-16);
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-10);
+  text-align: center;
+}
+
+.progress-percentage {
+  color: var(--color-border-blue);
+  font-weight: var(--font-weight-regular);
+  margin-left: var(--spacing-5);
 }
 
 .progress-bar {
   width: 100%;
-  height: 8px;
+  height: 12px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  margin-top: var(--spacing-10);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent-blue), var(--color-accent-green));
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--color-border-blue), var(--color-border-success));
+  border-radius: 5px;
+  transition: width 0.5s ease-in-out;
+  min-width: 0;
+  max-width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Quiz Completion Styles */
