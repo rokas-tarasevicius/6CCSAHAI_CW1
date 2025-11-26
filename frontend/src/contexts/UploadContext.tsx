@@ -13,7 +13,7 @@ export interface SuccessMessage {
   id: string
   message: string
   timestamp: number
-  type: 'individual' | 'batch'
+  type: 'individual'
 }
 
 interface UploadContextType {
@@ -24,7 +24,7 @@ interface UploadContextType {
   finishUpload: (id: string, success: boolean, error?: string) => void
   removeUpload: (id: string) => void
   hasActiveUploads: () => boolean
-  addSuccessMessage: (message: string, type: 'individual' | 'batch') => void
+  addSuccessMessage: (message: string, type: 'individual') => void
   clearSuccessMessages: () => void
   removeSuccessMessage: (id: string) => void
 }
@@ -84,7 +84,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return uploads.some(u => u.status === 'uploading' || u.status === 'processing')
   }, [uploads])
 
-  const addSuccessMessage = useCallback((message: string, type: 'individual' | 'batch') => {
+  const addSuccessMessage = useCallback((message: string, type: 'individual') => {
     const id = `success-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const newMessage: SuccessMessage = {
       id,

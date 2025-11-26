@@ -224,21 +224,9 @@ export default function CoursesPage() {
       const results = await Promise.all(uploadPromises)
       
       // Check results for final summary
-      const successfulUploads = results.filter(r => r.success)
       const failedUploads = results.filter(r => !r.success)
       
-      // Set batch completion message if multiple files were uploaded
-      if (filesToUpload.length > 1) {
-        if (successfulUploads.length > 0 && failedUploads.length === 0) {
-          addSuccessMessage(`✓ All ${successfulUploads.length} files uploaded successfully!`, 'batch')
-        } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
-          addSuccessMessage(`✓ ${successfulUploads.length} of ${filesToUpload.length} files uploaded successfully`, 'batch')
-        }
-      } else if (successfulUploads.length === 1) {
-        // For single file, the individual success message is already added above
-        // No need to add anything extra
-      }
-      
+      // Only handle failed uploads - individual success messages are already shown
       if (failedUploads.length > 0) {
         const errorMessages = failedUploads.map(r => `• ${r.fileName}: ${r.message}`).join('\n')
         setUploadError(`Failed uploads:\n${errorMessages}`)
