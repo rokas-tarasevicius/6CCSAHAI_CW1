@@ -113,7 +113,9 @@ async def start_file_based_quiz(request: FileQuizRequest):
             raise HTTPException(status_code=404, detail="No valid quiz questions found in selected files")
         
         # Shuffle questions for variety
-        random.shuffle(combined_questions) # TODO: Replace with the performance-based selection later
+        # TODO: Add user-profile updating logic here
+        # TODO: Replace with the performance-based selection later
+        random.shuffle(combined_questions)
         
         # Limit number of questions if max_questions is specified
         if request.max_questions and request.max_questions > 0:
