@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './CoursesPage.css'
 import { courseApi } from '../services/api'
 import { useUpload } from '../contexts/UploadContext'
+import { useQuizSelection } from '../contexts/QuizSelectionContext'
 import type { ParsedDataResponse } from '../types'
 
 export default function CoursesPage() {
@@ -12,12 +13,14 @@ export default function CoursesPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [selectedQuizzes, setSelectedQuizzes] = useState<Set<string>>(new Set())
   const [_, setRefreshing] = useState(false)
   const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
   
   // Use global upload context for persistent upload tracking and success messages
   const { uploads, successMessages, startUpload, updateUpload, finishUpload, addSuccessMessage, clearSuccessMessages } = useUpload()
+  
+  // Use global quiz selection context for persisting quiz selections
+  const { selectedQuizFiles, totalQuestions, addQuizFile, removeQuizFile, isQuizSelected } = useQuizSelection()
 
   useEffect(() => {
     loadCourse()
@@ -241,27 +244,12 @@ export default function CoursesPage() {
   }
 
   // Quiz selection handlers
-  const handleQuizSelection = (filePath: string) => {
-    setSelectedQuizzes(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(filePath)) {
-        newSet.delete(filePath)
-      } else {
-        newSet.add(filePath)
-      }
-      return newSet
-    })
-  }
-  
-  const getSelectedQuizCount = () => {
-    let totalQuestions = 0
-    selectedQuizzes.forEach(filePath => {
-      const fileData = parsedData?.files[filePath]
-      if (fileData?.quiz) {
-        totalQuestions += fileData.quiz.length
-      }
-    })
-    return totalQuestions
+  const handleQuizSelection = (filePath: string, fileName: string, questionCount: number) => {
+    if (isQuizSelected(filePath)) {
+      removeQuizFile(filePath)
+    } else {
+      addQuizFile(filePath, fileName, questionCount)
+    }
   }
 
   return (
@@ -470,13 +458,13 @@ export default function CoursesPage() {
                         </div>
                         <div className="quiz-actions">
                           <button 
-                            className={`btn-quiz-select ${selectedQuizzes.has(filePath) ? 'selected' : ''}`}
-                            onClick={() => handleQuizSelection(filePath)}
+                            className={`btn-quiz-select ${isQuizSelected(filePath) ? 'selected' : ''}`}
+                            onClick={() => handleQuizSelection(filePath, fileData.metadata.file_name, fileData.quiz?.length || 0)}
                           >
                             <span className="checkbox-icon">
-                              {selectedQuizzes.has(filePath) ? '✓' : '☐'}
+                              {isQuizSelected(filePath) ? '✓' : '☐'}
                             </span>
-                            {selectedQuizzes.has(filePath) ? 'Selected' : 'Select'}
+                            {isQuizSelected(filePath) ? 'Selected' : 'Select'}
                           </button>
                         </div>
                       </div>
@@ -498,9 +486,10 @@ export default function CoursesPage() {
           </div>
           )}
         </div>
-        {selectedQuizzes.size > 0 && (
+        {selectedQuizFiles.length > 0 && (
           <div className="quiz-start-section">
-            <p>{`Selected ${selectedQuizzes.size} quiz${selectedQuizzes.size > 1 ? 'zes' : ''} with ${getSelectedQuizCount()} question${getSelectedQuizCount() > 1 ? 's' : ''}`}</p>
+            <p>{`Selected ${selectedQuizFiles.length} quiz${selectedQuizFiles.length > 1 ? 'zes' : ''} with ${totalQuestions} question${totalQuestions > 1 ? 's' : ''}`}</p>
+            <p className="quiz-instruction">Go to the dashboard to start your quiz!</p>
           </div>
         )}
       </div>

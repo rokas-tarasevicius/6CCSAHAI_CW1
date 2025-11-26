@@ -8,6 +8,7 @@ interface QuestionCardProps {
   onAnswerSelect: (index: number) => void
   onSubmit: () => void
   onNext?: () => void
+  isLastQuestion?: boolean
 }
 
 export default function QuestionCard({
@@ -17,6 +18,7 @@ export default function QuestionCard({
   onAnswerSelect,
   onSubmit,
   onNext,
+  isLastQuestion = false,
 }: QuestionCardProps) {
   const correctAnswerIndex = question.answers.findIndex((ans) => ans.is_correct)
 
@@ -69,7 +71,7 @@ export default function QuestionCard({
       ) : (
         onNext && (
           <button onClick={onNext} className="btn-submit btn-glow">
-            Next Question
+            {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
           </button>
         )
       )}

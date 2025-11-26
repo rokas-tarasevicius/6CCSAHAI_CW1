@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { usePerformanceStore } from '../store/usePerformanceStore'
 import { questionsApi, performanceApi, courseApi } from '../services/api'
 import { calculateScoreChange } from '../utils/scoreChange'
@@ -9,6 +9,7 @@ import ScorePanel from '../components/ScorePanel'
 import './QuizPage.css'
 
 export default function QuizPage() {
+  const location = useLocation()
   const { performance, setPerformance } = usePerformanceStore()
   const [hasContent, setHasContent] = useState<boolean | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
@@ -18,9 +19,22 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [scoreChange, setScoreChange] = useState<number | undefined>(undefined)
+  
+  // File-based quiz state
+  const [isFileBasedQuiz, setIsFileBasedQuiz] = useState(false)
+  const [allQuestions, setAllQuestions] = useState<Question[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
   useEffect(() => {
-    checkForContentAndLoadQuestion()
+    // Check if this is a file-based quiz from navigation state
+    const state = location.state as any
+    if (state?.fileBasedQuiz && state?.selectedFilePaths) {
+      setIsFileBasedQuiz(true)
+      loadFileBasedQuiz(state.selectedFilePaths)
+    } else {
+      setIsFileBasedQuiz(false)
+      checkForContentAndLoadQuestion()
+    }
   }, [])
 
   const checkForContentAndLoadQuestion = async () => {
@@ -98,6 +112,48 @@ export default function QuizPage() {
     }
   }
 
+  const loadFileBasedQuiz = async (selectedFilePaths: string[]) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Call the new API endpoint to get combined quiz questions
+      const questions = await questionsApi.startFileBasedQuiz(selectedFilePaths)
+      setAllQuestions(questions)
+      setCurrentQuestionIndex(0)
+      
+      // Set the first question
+      if (questions.length > 0) {
+        setQuestion(questions[0])
+        setHasContent(true)
+      } else {
+        setError('No questions found in selected files')
+        setHasContent(false)
+      }
+    } catch (err: any) {
+      console.error('Failed to load file-based quiz:', err)
+      setError(err.response?.data?.detail || err.message || 'Failed to load quiz')
+      setHasContent(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadNextFileBasedQuestion = () => {
+    const nextIndex = currentQuestionIndex + 1
+    if (nextIndex < allQuestions.length) {
+      setCurrentQuestionIndex(nextIndex)
+      setQuestion(allQuestions[nextIndex])
+      setSelectedAnswer(null)
+      setIsAnswered(false)
+      setScoreChange(undefined)
+    } else {
+      // Quiz completed - show completion screen
+      setQuestion(null)
+      setHasContent(null) // This will trigger a completion screen
+    }
+  }
+
   const handleAnswerSelect = (index: number) => {
     if (!isAnswered) {
       setSelectedAnswer(index)
@@ -138,17 +194,22 @@ export default function QuizPage() {
   }
 
   const handleNext = async () => {
-    // If we have a cached question, use it immediately (no loading)
-    if (cachedQuestion) {
-      setQuestion(cachedQuestion)
-      setCachedQuestion(null) // Clear cache
-      setSelectedAnswer(null)
-      setIsAnswered(false)
-      setScoreChange(undefined)
-      // Pre-generation will be triggered by useEffect when question is set
+    if (isFileBasedQuiz) {
+      // Handle file-based quiz navigation
+      loadNextFileBasedQuestion()
     } else {
-      // No cached question, show loading and generate on demand
-      loadQuestion()
+      // Handle adaptive quiz navigation
+      if (cachedQuestion) {
+        setQuestion(cachedQuestion)
+        setCachedQuestion(null) // Clear cache
+        setSelectedAnswer(null)
+        setIsAnswered(false)
+        setScoreChange(undefined)
+        // Pre-generation will be triggered by useEffect when question is set
+      } else {
+        // No cached question, show loading and generate on demand
+        loadQuestion()
+      }
     }
   }
 
@@ -188,6 +249,25 @@ export default function QuizPage() {
   }
 
   if (!question) {
+    if (isFileBasedQuiz && allQuestions.length > 0) {
+      // Show completion screen for file-based quiz
+      return (
+        <div className="quiz-page">
+          <div className="quiz-completed">
+            <h2>Quiz Completed! 🎉</h2>
+            <p>You've successfully completed the quiz with {allQuestions.length} questions.</p>
+            <div className="completion-actions">
+              <Link to="/courses" className="btn-primary">
+                Back to Courses
+              </Link>
+              <Link to="/" className="btn-secondary">
+                Go to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
     return null
   }
 
@@ -195,6 +275,21 @@ export default function QuizPage() {
     <div className="quiz-page">
       <div className="quiz-content">
         <div className="quiz-left-pane">
+          {isFileBasedQuiz && (
+            <div className="quiz-progress">
+              <h3>File-Based Quiz Progress</h3>
+              <div className="progress-info">
+                Question {currentQuestionIndex + 1} of {allQuestions.length}
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+          
           <div className="question-section">
             <QuestionCard
               question={question}
@@ -203,6 +298,7 @@ export default function QuizPage() {
               onAnswerSelect={handleAnswerSelect}
               onSubmit={handleSubmit}
               onNext={handleNext}
+              isLastQuestion={isFileBasedQuiz && currentQuestionIndex >= allQuestions.length - 1}
             />
           </div>
         </div>

@@ -1,12 +1,15 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { usePerformanceStore } from '../store/usePerformanceStore'
+import { useQuizSelection } from '../contexts/QuizSelectionContext'
 import { courseApi } from '../services/api'
 import ScorePanel from '../components/ScorePanel'
 import './HomePage.css'
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const { performance } = usePerformanceStore()
+  const { selectedQuizFiles, totalQuestions, getSelectedFilePaths } = useQuizSelection()
   const [hasContent, setHasContent] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -24,6 +27,23 @@ export default function HomePage() {
       setHasContent(false)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleStartQuiz = () => {
+    if (selectedQuizFiles.length === 0) {
+      // If no files selected, use adaptive quiz mode (existing behavior)
+      navigate('/quiz')
+    } else {
+      // Use file-based quiz with selected files
+      const selectedFilePaths = getSelectedFilePaths()
+      navigate('/quiz', { 
+        state: { 
+          fileBasedQuiz: true,
+          selectedFilePaths: selectedFilePaths,
+          totalQuestions: totalQuestions
+        }
+      })
     }
   }
 
@@ -52,10 +72,25 @@ export default function HomePage() {
         <div className="welcome-section">
           <h2>Welcome to the Adaptive Learning Platform</h2>
           <p>Your course materials are ready! Start your personalized quiz now.</p>
+          
+          {selectedQuizFiles.length > 0 && (
+            <div className="selected-quiz-info">
+              <h3>Selected Quiz Files</h3>
+              <p>{`${selectedQuizFiles.length} file${selectedQuizFiles.length > 1 ? 's' : ''} selected with ${totalQuestions} question${totalQuestions > 1 ? 's' : ''}`}</p>
+              <ul className="selected-files-list">
+                {selectedQuizFiles.map((file) => (
+                  <li key={file.filePath}>
+                    {file.fileName} ({file.questionCount} questions)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
           <div className="action-buttons">
-            <Link to="/quiz" className="btn-primary">
-              Start Quiz
-            </Link>
+            <button onClick={handleStartQuiz} className="btn-primary">
+              {selectedQuizFiles.length > 0 ? 'Start Selected Quiz' : 'Start Adaptive Quiz'}
+            </button>
             <Link to="/courses" className="btn-secondary">
               Manage Courses
             </Link>

@@ -43,6 +43,13 @@ export const questionsApi = {
     return response.data
   },
   
+  startFileBasedQuiz: async (selectedFilePaths: string[]): Promise<Question[]> => {
+    const response = await api.post<Question[]>('/questions/start-file-quiz', {
+      file_paths: selectedFilePaths
+    })
+    return response.data
+  },
+  
   submitAnswer: async (
     selectedIndex: number,
     topic: string,
