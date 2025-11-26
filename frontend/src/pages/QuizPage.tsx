@@ -22,7 +22,7 @@ export default function QuizPage() {
     // Check if this is a file-based quiz from navigation state
     const state = location.state as any
     if (state?.fileBasedQuiz && state?.selectedFilePaths) {
-      loadFileBasedQuiz(state.selectedFilePaths)
+      loadFileBasedQuiz(state.selectedFilePaths, state.maxQuestions)
     } else {
       // No adaptive mode - redirect to courses if no files selected
       setError('Please select quiz files from the courses page')
@@ -30,13 +30,13 @@ export default function QuizPage() {
     }
   }, [location.state])
 
-  const loadFileBasedQuiz = async (selectedFilePaths: string[]) => {
+  const loadFileBasedQuiz = async (selectedFilePaths: string[], maxQuestions?: number) => {
     try {
       setLoading(true)
       setError(null)
       
       // Call the API endpoint to get combined quiz questions
-      const questions = await questionsApi.startFileBasedQuiz(selectedFilePaths)
+      const questions = await questionsApi.startFileBasedQuiz(selectedFilePaths, maxQuestions)
       setAllQuestions(questions)
       setCurrentQuestionIndex(0)
       

@@ -42,6 +42,7 @@ class QuestionResponse(BaseModel):
 
 class FileQuizRequest(BaseModel):
     file_paths: List[str]
+    max_questions: Optional[int] = None  # Optional limit on number of questions
 
 
 @router.post("/start-file-quiz", response_model=List[QuestionResponse])
@@ -112,7 +113,14 @@ async def start_file_based_quiz(request: FileQuizRequest):
             raise HTTPException(status_code=404, detail="No valid quiz questions found in selected files")
         
         # Shuffle questions for variety
-        random.shuffle(combined_questions)
+        random.shuffle(combined_questions) # TODO: Replace with the performance-based selection later
+        
+        # Limit number of questions if max_questions is specified
+        if request.max_questions and request.max_questions > 0:
+            original_count = len(combined_questions)
+            if original_count > request.max_questions:
+                combined_questions = combined_questions[:request.max_questions]
+                print(f"Limited quiz to {request.max_questions} questions (randomly selected from {original_count} available)")
         
         print(f"Created file-based quiz with {len(combined_questions)} questions from {len(request.file_paths)} files")
         

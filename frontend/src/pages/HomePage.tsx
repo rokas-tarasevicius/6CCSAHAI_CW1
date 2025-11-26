@@ -9,6 +9,7 @@ export default function HomePage() {
   const { selectedQuizFiles, totalQuestions, getSelectedFilePaths } = useQuizSelection()
   const [hasContent, setHasContent] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
+  const [maxQuestions, setMaxQuestions] = useState<number | ''>('')
 
   useEffect(() => {
     checkForContent()
@@ -34,11 +35,14 @@ export default function HomePage() {
     } else {
       // Use file-based quiz with selected files
       const selectedFilePaths = getSelectedFilePaths()
+      const questionLimit = typeof maxQuestions === 'number' && maxQuestions > 0 ? maxQuestions : undefined
+      
       navigate('/quiz', { 
         state: { 
           fileBasedQuiz: true,
           selectedFilePaths: selectedFilePaths,
-          totalQuestions: totalQuestions
+          totalQuestions: totalQuestions,
+          maxQuestions: questionLimit
         }
       })
     }
@@ -81,6 +85,23 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
+              
+              <div className="quiz-options">
+                <label htmlFor="max-questions">
+                  Limit questions to:
+                </label>
+                <input
+                  id="max-questions"
+                  type="number"
+                  min="1"
+                  max={totalQuestions}
+                  value={maxQuestions}
+                  onChange={(e) => setMaxQuestions(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  placeholder={`All ${totalQuestions} questions`}
+                  className="question-limit-input"
+                />
+                <span className="input-hint">Leave empty to use all questions</span>
+              </div>
             </div>
           )}
           

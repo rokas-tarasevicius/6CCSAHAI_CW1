@@ -36,10 +36,17 @@ export const courseApi = {
 }
 
 export const questionsApi = {
-  startFileBasedQuiz: async (selectedFilePaths: string[]): Promise<Question[]> => {
-    const response = await api.post<Question[]>('/questions/start-file-quiz', {
+  startFileBasedQuiz: async (selectedFilePaths: string[], maxQuestions?: number): Promise<Question[]> => {
+    const requestBody: any = {
       file_paths: selectedFilePaths
-    })
+    }
+    
+    // Include max_questions only if specified
+    if (maxQuestions && maxQuestions > 0) {
+      requestBody.max_questions = maxQuestions
+    }
+    
+    const response = await api.post<Question[]>('/questions/start-file-quiz', requestBody)
     return response.data
   },
   
