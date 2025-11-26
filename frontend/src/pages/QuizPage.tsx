@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { questionsApi } from '../services/api'
 import type { Question } from '../types'
 import QuestionCard from '../components/QuestionCard'
@@ -7,6 +7,7 @@ import './QuizPage.css'
 
 export default function QuizPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [hasContent, setHasContent] = useState<boolean | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -83,7 +84,16 @@ export default function QuizPage() {
   }
 
   const handleNext = async () => {
-    loadNextFileBasedQuestion()
+    // Check if this is the last question
+    const isLastQuestion = currentQuestionIndex >= allQuestions.length - 1
+    
+    if (isLastQuestion) {
+      // Navigate directly to dashboard on quiz completion
+      navigate('/')
+    } else {
+      // Load next question
+      loadNextFileBasedQuestion()
+    }
   }
 
   // Check if content exists first
