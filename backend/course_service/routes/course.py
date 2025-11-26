@@ -54,21 +54,19 @@ async def generate_quiz_for_file(file_name: str, content: str, num_questions: in
         
         questions = []
         difficulties = [DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD]
-        
-        for i in range(num_questions):
-            # Vary difficulty across questions
-            difficulty = difficulties[i % len(difficulties)]
-            
-            # Generate question using larger content context
-            question = generator.generate_question(
-                topic=topic_name,
-                subtopic="Main Content",
-                concept=concept,
-                difficulty=difficulty,
-                content_context=content_preview,
-                num_answers=4,
-                use_cache=False  # Don't cache for file-specific questions
-            )
+
+        from backend.quiz_service.models.question import MultipleChoiceQuestion
+        questions:List[MultipleChoiceQuestion] = generator.generate_questions(
+            topic=topic_name,
+            subtopic="Main Content",
+            concept=concept,
+            difficulty=difficulties[0],
+            content_context=content_preview,
+            num_answers=4
+        )
+
+        formatted_questions:List[Dict[str, Any]] = []
+        for question in questions:
             
             # Convert to dict format for JSON storage
             question_dict = {
@@ -88,9 +86,9 @@ async def generate_quiz_for_file(file_name: str, content: str, num_questions: in
                 "explanation": question.explanation
             }
             
-            questions.append(question_dict)
+            formatted_questions.append(question_dict)
             
-        return questions
+        return formatted_questions
         
     except Exception as e:
         print(f"Error generating quiz for {file_name}: {str(e)}")
