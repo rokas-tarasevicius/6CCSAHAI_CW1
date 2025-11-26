@@ -45,23 +45,6 @@ export default function UploadIndicator() {
                 </div>
               )}
               
-              {upload.status === 'processing' && (
-                <div className="processing-steps">
-                  <div className="processing-step active">
-                    <span className="step-icon">📄</span>
-                    <span>Uploading</span>
-                  </div>
-                  <div className="processing-step active">
-                    <span className="step-icon">🔍</span>
-                    <span>Extracting</span>
-                  </div>
-                  <div className="processing-step active">
-                    <span className="step-icon">🧠</span>
-                    <span>Analyzing</span>
-                  </div>
-                </div>
-              )}
-              
               {upload.status === 'error' && upload.error && (
                 <div className="upload-error">
                   <span className="error-text">{upload.error}</span>

@@ -222,27 +222,6 @@ export default function CoursesPage() {
               <div className="upload-progress-bar">
                 <div className="upload-progress-fill"></div>
               </div>
-              
-              {upload.status === 'processing' && (
-                <div className="processing-steps">
-                  <div className="processing-step active">
-                    <span className="step-icon">📄</span>
-                    <span>Uploading</span>
-                  </div>
-                  <div className="processing-step active">
-                    <span className="step-icon">🔍</span>
-                    <span>Extracting content</span>
-                  </div>
-                  <div className="processing-step active">
-                    <span className="step-icon">🧠</span>
-                    <span>Analyzing structure</span>
-                  </div>
-                  <div className="processing-step">
-                    <span className="step-icon">✅</span>
-                    <span>Complete</span>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
           
