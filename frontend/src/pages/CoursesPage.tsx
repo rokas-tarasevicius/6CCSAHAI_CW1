@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './CoursesPage.css'
 import { courseApi } from '../services/api'
+import { useUpload } from '../contexts/UploadContext'
 import type { ParsedDataResponse } from '../types'
 
 export default function CoursesPage() {
@@ -12,6 +13,9 @@ export default function CoursesPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  
+  // Use global upload context for persistent upload tracking
+  const { uploads, startUpload, updateUpload, finishUpload } = useUpload()
 
   useEffect(() => {
     loadCourse()
@@ -74,24 +78,39 @@ export default function CoursesPage() {
   const handleUpload = async () => {
     if (!selectedFile) return
 
+    const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
     setUploading(true)
     setUploadError(null)
     setSuccess(null)
+    
+    // Start global upload tracking
+    startUpload(uploadId, selectedFile.name)
 
     try {
+      // Update status to processing
+      updateUpload(uploadId, { status: 'processing' })
+      
       const result = await courseApi.uploadPdf(selectedFile)
+      
       if (result.success) {
         setSuccess(result.message)
         setSelectedFile(null)
+        
         // Reload the course data after successful upload
         await loadCourse()
+        
+        // Mark upload as successful
+        finishUpload(uploadId, true)
       } else {
         setUploadError(result.message || 'Upload failed')
+        finishUpload(uploadId, false, result.message || 'Upload failed')
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload PDF'
       setUploadError(errorMessage)
       console.error('Error uploading PDF:', errorMessage)
+      finishUpload(uploadId, false, errorMessage)
     } finally {
       setUploading(false)
     }
@@ -186,6 +205,47 @@ export default function CoursesPage() {
 
         <div className="courses-list">
           <h2 className="section-title">Your Courses</h2>
+          
+          {/* Active Upload Progress - show at top of courses list */}
+          {uploads.filter(u => u.status === 'uploading' || u.status === 'processing').map(upload => (
+            <div key={upload.id} className="upload-progress-card">
+              <div className="upload-progress-header">
+                <div className="upload-file-info">
+                  <span className="upload-file-name">{upload.fileName}</span>
+                  <span className={`upload-status ${upload.status}`}>
+                    {upload.status === 'uploading' && '📤 Uploading...'}
+                    {upload.status === 'processing' && '⚡ Processing...'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="upload-progress-bar">
+                <div className="upload-progress-fill"></div>
+              </div>
+              
+              {upload.status === 'processing' && (
+                <div className="processing-steps">
+                  <div className="processing-step active">
+                    <span className="step-icon">📄</span>
+                    <span>Uploading</span>
+                  </div>
+                  <div className="processing-step active">
+                    <span className="step-icon">🔍</span>
+                    <span>Extracting content</span>
+                  </div>
+                  <div className="processing-step active">
+                    <span className="step-icon">🧠</span>
+                    <span>Analyzing structure</span>
+                  </div>
+                  <div className="processing-step">
+                    <span className="step-icon">✅</span>
+                    <span>Complete</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          
           {loading ? (
             <div className="empty-state">
               <p>Loading parsed files...</p>
