@@ -556,6 +556,16 @@
 .processing-step.active span {
   color: var(--color-text-blue);
   font-weight: var(--font-weight-regular);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* Upload Progress Card Styles */
@@ -565,7 +575,8 @@
   border-radius: var(--radius-40);
   padding: var(--spacing-20);
   margin-bottom: var(--spacing-20);
-  border-left: 3px solid var(--color-accent-blue);
+  border-left: 3px solid #3b82f6;
+  animation: slideInFromTop 0.4s ease-out;
 }
 
 .upload-progress-header {
@@ -616,9 +627,10 @@
 
 .upload-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent-blue), var(--color-accent-purple));
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   border-radius: 3px;
   animation: progressIndeterminate 2s ease-in-out infinite;
+  width: 100%;
 }
 
 @keyframes progressIndeterminate {
@@ -630,6 +642,17 @@
   }
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
