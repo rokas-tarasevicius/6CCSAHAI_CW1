@@ -253,6 +253,14 @@
   gap: var(--spacing-30);
 }
 
+/* Courses List Header */
+.courses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-20);
+}
+
 .empty-state {
   padding: var(--spacing-50);
   text-align: center;
@@ -450,6 +458,28 @@
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+/* Upload Messages */
+.upload-message {
+  padding: var(--spacing-15) var(--spacing-20);
+  border-radius: var(--radius-30);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-18);
+  margin-top: var(--spacing-15);
+}
+
+.upload-message.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: var(--border-width) solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.upload-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: var(--border-width) solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 /* Processing Section Styles */

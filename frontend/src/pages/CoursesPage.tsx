@@ -13,6 +13,8 @@ export default function CoursesPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [_, setRefreshing] = useState(false)
+  const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
   
   // Use global upload context for persistent upload tracking
   const { uploads, startUpload, updateUpload, finishUpload } = useUpload()
@@ -20,6 +22,15 @@ export default function CoursesPage() {
   useEffect(() => {
     loadCourse()
   }, [])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout)
+      }
+    }
+  }, [refreshTimeout])
 
   const loadCourse = async () => {
     try {
@@ -34,6 +45,75 @@ export default function CoursesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Refresh course data without showing loading spinner (preserves UI state)
+  const refreshCourse = async (retryCount = 0, maxRetries = 3): Promise<boolean> => {
+    try {
+      setRefreshing(true)
+      setLoadError(null)
+      
+      // Add a small delay before first attempt to ensure backend has processed the upload
+      if (retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      
+      const data = await courseApi.getCourse()
+      
+      // Check if we actually got new data (more files than before)
+      const currentFileCount = parsedData ? Object.keys(parsedData.files).length : 0
+      const newFileCount = Object.keys(data.files).length
+      
+      setParsedData(data)
+      
+      // If we didn't get new data and we haven't exhausted retries, try again
+      if (newFileCount <= currentFileCount && retryCount < maxRetries) {
+        console.log(`Refresh attempt ${retryCount + 1}: No new data found, retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))) // Exponential backoff
+        return await refreshCourse(retryCount + 1, maxRetries)
+      }
+      
+      return true
+    } catch (err: any) {
+      console.error('Error refreshing course data:', err)
+      
+      // If we haven't exhausted retries, try again
+      if (retryCount < maxRetries) {
+        console.log(`Refresh attempt ${retryCount + 1} failed, retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
+        return await refreshCourse(retryCount + 1, maxRetries)
+      }
+      
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to refresh course data'
+      setLoadError(errorMessage)
+      return false
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  // Debounced refresh function to prevent multiple simultaneous calls
+  const debouncedRefreshCourse = (fileName: string) => {
+    // Clear existing timeout
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout)
+    }
+    
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      console.log(`Debounced refresh triggered for ${fileName}`)
+      refreshCourse().then(refreshSuccess => {
+        if (refreshSuccess) {
+          console.log(`Course data refreshed successfully for ${fileName}`)
+        } else {
+          console.warn(`Course data refresh failed for ${fileName}`)
+        }
+      }).catch(err => {
+        console.error(`Error refreshing course data for ${fileName}:`, err)
+      })
+    }, 1000) // Wait 1 second before refreshing
+    
+    setRefreshTimeout(timeout)
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -88,6 +168,7 @@ export default function CoursesPage() {
     setUploadError(null)
     setSuccess(null)
     
+    // Process files individually so we can refresh after each successful upload
     const uploadPromises = selectedFiles.map(async (file) => {
       const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       
@@ -103,6 +184,11 @@ export default function CoursesPage() {
         if (result.success) {
           // Mark upload as successful
           finishUpload(uploadId, true)
+          
+          // Immediately refresh course data for this successful upload
+          console.log(`File ${file.name} uploaded successfully, triggering refresh...`)
+          debouncedRefreshCourse(file.name)
+          
           return { success: true, fileName: file.name, message: result.message }
         } else {
           finishUpload(uploadId, false, result.message || 'Upload failed')
@@ -118,16 +204,13 @@ export default function CoursesPage() {
     try {
       const results = await Promise.all(uploadPromises)
       
-      // Check results
+      // Check results for final summary
       const successfulUploads = results.filter(r => r.success)
       const failedUploads = results.filter(r => !r.success)
       
       if (successfulUploads.length > 0) {
-        setSuccess(`Successfully uploaded ${successfulUploads.length} file(s): ${successfulUploads.map(r => r.fileName).join(', ')}`)
         setSelectedFiles([])
-        
-        // Reload the course data after successful uploads
-        await loadCourse()
+        setSuccess(`Successfully uploaded ${successfulUploads.length} file(s): ${successfulUploads.map(r => r.fileName).join(', ')}.`)
       }
       
       if (failedUploads.length > 0) {
@@ -270,7 +353,9 @@ export default function CoursesPage() {
         </div>
 
         <div className="courses-list">
-          <h2 className="section-title">Your Courses</h2>
+          <div className="courses-header">
+            <h2 className="section-title">Your Courses</h2>
+          </div>
           
           {/* Active Upload Progress - show at top of courses list */}
           {uploads.filter(u => u.status === 'uploading' || u.status === 'processing').map(upload => (
