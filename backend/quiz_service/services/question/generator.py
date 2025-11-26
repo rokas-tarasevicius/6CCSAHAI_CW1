@@ -155,9 +155,9 @@ class QuestionGenerator:
                 is_valid, validation_errors = QuestionValidator.validate(question)
                 
                 if not is_valid:
-                    # If validation fails, log and use fallback
+                    # If validation fails, skip this question
                     print(f"Generated question failed validation: {validation_errors}")
-                    return self._generate_fallback_question(topic, subtopic, concept, difficulty)
+                    continue
                 
                 multiple_choice_questions.append(question)
             
@@ -165,74 +165,6 @@ class QuestionGenerator:
             return multiple_choice_questions
             
         except Exception as e:
-            # Fallback: generate a simple question
-            # Log error but don't fail - use fallback
-            print(f"Question generation error: {e}, using fallback")
-            return self._generate_fallback_question(topic, subtopic, concept, difficulty)
-    
-    def _generate_fallback_question(
-        self,
-        topic: str,
-        subtopic: str,
-        concept: Concept,
-        difficulty: DifficultyLevel
-    ) -> MultipleChoiceQuestion:
-        """Generate a fallback question if AI generation fails.
-        
-        Args:
-            topic: Topic name
-            subtopic: Subtopic name
-            concept: Concept object
-            difficulty: Difficulty level
-            
-        Returns:
-            Simple MultipleChoiceQuestion with concrete, factual answers
-        """
-        question_text = f"Which of the following best describes {concept.name}?"
-        
-        # Create concrete, factual alternatives based on common programming concepts
-        # These are better than generic placeholders - they're actual concepts students might confuse
-        alternatives = [
-            "A data structure used for storing collections of items",
-            "A control structure that executes code conditionally",
-            "A function that performs mathematical operations",
-            "A variable that holds multiple values",
-            "A loop that repeats code a specific number of times",
-            "A method for organizing related code together",
-            "A type of error handling mechanism",
-            "A way to import external libraries"
-        ]
-        
-        # Select 3 random alternatives that are different from the concept description
-        selected_alternatives = []
-        for alt in alternatives:
-            if alt.lower() != concept.description.lower()[:50]:  # Avoid duplicates
-                selected_alternatives.append(alt)
-                if len(selected_alternatives) >= 3:
-                    break
-        
-        # Ensure we have enough alternatives
-        while len(selected_alternatives) < 3:
-            selected_alternatives.append(f"A programming concept related to {subtopic.lower()}")
-        
-        answers = [
-            Answer(text=concept.description, is_correct=True),
-        ]
-        
-        # Add concrete alternatives
-        for alt in selected_alternatives[:3]:
-            answers.append(Answer(text=alt, is_correct=False))
-        
-        # Shuffle answers
-        random.shuffle(answers)
-        
-        return MultipleChoiceQuestion(
-            question_text=question_text,
-            answers=answers[:4],
-            topic=topic,
-            subtopic=subtopic,
-            concepts=[concept.name],
-            difficulty=difficulty,
-            explanation=f"{concept.name}: {concept.description}"
-        )
-
+            # Fallback: Return nothing
+            print(f"Question generation error: {e}, returning empty list")
+            return []
