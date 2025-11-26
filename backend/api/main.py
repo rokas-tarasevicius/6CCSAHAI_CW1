@@ -10,7 +10,7 @@ import sys
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.quiz_service.routes import questions, performance
+from backend.quiz_service.routes import questions
 from backend.video_service.routes import videos
 from backend.course_service.routes import course
 
@@ -32,7 +32,6 @@ app.add_middleware(
 # Include routers
 app.include_router(course.router, prefix="/api/course", tags=["course"])
 app.include_router(questions.router, prefix="/api/questions", tags=["questions"])
-app.include_router(performance.router, prefix="/api/performance", tags=["performance"])
 app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
 
 

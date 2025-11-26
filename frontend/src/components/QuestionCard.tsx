@@ -20,7 +20,8 @@ export default function QuestionCard({
   onNext,
   isLastQuestion = false,
 }: QuestionCardProps) {
-  const correctAnswerIndex = question.answers.findIndex((ans) => ans.is_correct)
+  // Find correct answer for validation
+  // const correctAnswerIndex = question.answers.findIndex((ans) => ans.is_correct)
 
   return (
     <div className="question-card">

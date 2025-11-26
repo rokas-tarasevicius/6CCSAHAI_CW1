@@ -6,7 +6,7 @@ from backend.course_service.models.course import Concept
 from backend.shared.services.llm.mistral_client import MistralClient
 from backend.shared.services.llm.prompts import QUESTION_GENERATION_PROMPT, CHOICE_GENERATION_PROMPT
 from backend.shared.services.llm.mcq_prompts import KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION, ANSWER_GENERATION_SYSTEM_INSTRUCTION
-from backend.quiz_service.services.question.cache import get_cache
+# from backend.quiz_service.services.question.cache import get_cache
 from backend.shared.utils.config import Config
 
 
@@ -34,7 +34,6 @@ class QuestionGenerator:
         difficulty: DifficultyLevel = DifficultyLevel.MEDIUM,
         content_context: str = "",
         num_answers: int = 4,
-        use_cache: bool = True
     ) -> MultipleChoiceQuestion:
         """Generate a multiple choice question for a specific concept.
         
@@ -45,17 +44,16 @@ class QuestionGenerator:
             difficulty: Question difficulty level
             content_context: Additional content context
             num_answers: Number of answer options (2-5)
-            use_cache: Whether to use cached questions
             
         Returns:
             Generated MultipleChoiceQuestion
         """
-        # Check cache first
-        if use_cache:
-            cache = get_cache()
-            cached_question = cache.get(topic, subtopic, concept.name, difficulty)
-            if cached_question:
-                return cached_question
+        # # Check cache first
+        # if use_cache:
+        #     cache = get_cache()
+        #     cached_question = cache.get(topic, subtopic, concept.name, difficulty)
+        #     if cached_question:
+        #         return cached_question
         
         num_answers = max(Config.MIN_ANSWERS, min(Config.MAX_ANSWERS, num_answers))
         
@@ -164,10 +162,10 @@ class QuestionGenerator:
                 print(f"Generated question failed validation: {validation_errors}")
                 return self._generate_fallback_question(topic, subtopic, concept, difficulty)
             
-            # Cache the question
-            if use_cache:
-                cache = get_cache()
-                cache.set(topic, subtopic, concept.name, difficulty, question)
+            # # Cache the question
+            # if use_cache:
+            #     cache = get_cache()
+            #     cache.set(topic, subtopic, concept.name, difficulty, question)
             
             return question
             

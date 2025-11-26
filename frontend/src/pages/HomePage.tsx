@@ -1,14 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { usePerformanceStore } from '../store/usePerformanceStore'
 import { useQuizSelection } from '../contexts/QuizSelectionContext'
 import { courseApi } from '../services/api'
-import ScorePanel from '../components/ScorePanel'
 import './HomePage.css'
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { performance } = usePerformanceStore()
   const { selectedQuizFiles, totalQuestions, getSelectedFilePaths } = useQuizSelection()
   const [hasContent, setHasContent] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
@@ -32,8 +29,8 @@ export default function HomePage() {
 
   const handleStartQuiz = () => {
     if (selectedQuizFiles.length === 0) {
-      // If no files selected, use adaptive quiz mode (existing behavior)
-      navigate('/quiz')
+      // No files selected - redirect to courses page
+      navigate('/courses')
     } else {
       // Use file-based quiz with selected files
       const selectedFilePaths = getSelectedFilePaths()
@@ -68,10 +65,10 @@ export default function HomePage() {
             Upload Course Material
           </Link>
         </div>
-      ) : performance.total_questions_answered === 0 ? (
+      ) : (
         <div className="welcome-section">
-          <h2>Welcome to the Adaptive Learning Platform</h2>
-          <p>Your course materials are ready! Start your personalized quiz now.</p>
+          <h2>Welcome to the File-Based Quiz Platform</h2>
+          <p>Your course materials are ready! Start your quiz now.</p>
           
           {selectedQuizFiles.length > 0 && (
             <div className="selected-quiz-info">
@@ -89,16 +86,12 @@ export default function HomePage() {
           
           <div className="action-buttons">
             <button onClick={handleStartQuiz} className="btn-primary">
-              {selectedQuizFiles.length > 0 ? 'Start Selected Quiz' : 'Start Adaptive Quiz'}
+              {selectedQuizFiles.length > 0 ? 'Start Selected Quiz' : 'Select Quiz Files First'}
             </button>
             <Link to="/courses" className="btn-secondary">
               Manage Courses
             </Link>
           </div>
-        </div>
-      ) : (
-        <div className="dashboard-content">
-          <ScorePanel performance={performance} />
         </div>
       )}
     </div>

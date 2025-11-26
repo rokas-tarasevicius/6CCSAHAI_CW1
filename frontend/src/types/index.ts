@@ -26,32 +26,7 @@ export interface QuizQuestion {
   created_at?: string
 }
 
-export interface Performance {
-  total_questions_answered: number
-  total_correct: number
-  total_incorrect: number
-  trophy_score: number
-  overall_accuracy: number
-  topic_scores: Record<string, TopicScore>
-}
 
-export interface TopicScore {
-  overall_accuracy: number
-  subtopic_scores: Record<string, SubtopicScore>
-}
-
-export interface SubtopicScore {
-  overall_accuracy: number
-  concept_scores: Record<string, ConceptScore>
-}
-
-export interface ConceptScore {
-  attempts: number
-  correct: number
-  incorrect: number
-  accuracy: number
-  is_weak: boolean
-}
 
 export interface VideoRecommendation {
   topic: string
