@@ -12,6 +12,7 @@ export default function CoursesPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [selectedQuizzes, setSelectedQuizzes] = useState<Set<string>>(new Set())
   const [_, setRefreshing] = useState(false)
   const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
   
@@ -239,6 +240,30 @@ export default function CoursesPage() {
     // This allows consecutive uploads without waiting for the previous batch to complete
   }
 
+  // Quiz selection handlers
+  const handleQuizSelection = (filePath: string) => {
+    setSelectedQuizzes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(filePath)) {
+        newSet.delete(filePath)
+      } else {
+        newSet.add(filePath)
+      }
+      return newSet
+    })
+  }
+  
+  const getSelectedQuizCount = () => {
+    let totalQuestions = 0
+    selectedQuizzes.forEach(filePath => {
+      const fileData = parsedData?.files[filePath]
+      if (fileData?.quiz) {
+        totalQuestions += fileData.quiz.length
+      }
+    })
+    return totalQuestions
+  }
+
   return (
     <div className="courses-page">
       <div className="subject-header">
@@ -444,43 +469,23 @@ export default function CoursesPage() {
                           <span className="quiz-text">Quiz available: {fileData.quiz.length} questions</span>
                         </div>
                         <div className="quiz-actions">
-                          <button className="btn-quiz-take">
-                            Take Quiz
-                          </button>
                           <button 
-                            className="btn-quiz-regenerate"
-                            onClick={async () => {
-                              try {
-                                await courseApi.generateQuiz(filePath, 5)
-                                await loadCourse() // Refresh to show new quiz
-                              } catch (err) {
-                                console.error('Failed to regenerate quiz:', err)
-                              }
-                            }}
+                            className={`btn-quiz-select ${selectedQuizzes.has(filePath) ? 'selected' : ''}`}
+                            onClick={() => handleQuizSelection(filePath)}
                           >
-                            Regenerate Quiz
+                            <span className="checkbox-icon">
+                              {selectedQuizzes.has(filePath) ? '✓' : '☐'}
+                            </span>
+                            {selectedQuizzes.has(filePath) ? 'Selected' : 'Select'}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="quiz-unavailable">
                         <div className="quiz-info">
-                          <span className="quiz-icon">❓</span>
+                          <span className="quiz-icon">❌</span>
                           <span className="quiz-text">No quiz available</span>
                         </div>
-                        <button 
-                          className="btn-quiz-generate"
-                          onClick={async () => {
-                            try {
-                              await courseApi.generateQuiz(filePath, 5)
-                              await loadCourse() // Refresh to show new quiz
-                            } catch (err) {
-                              console.error('Failed to generate quiz:', err)
-                            }
-                          }}
-                        >
-                          Generate Quiz
-                        </button>
                       </div>
                     )}
                   </div>
@@ -493,6 +498,11 @@ export default function CoursesPage() {
           </div>
           )}
         </div>
+        {selectedQuizzes.size > 0 && (
+          <div className="quiz-start-section">
+            <p>{`Selected ${selectedQuizzes.size} quiz${selectedQuizzes.size > 1 ? 'zes' : ''} with ${getSelectedQuizCount()} question${getSelectedQuizCount() > 1 ? 's' : ''}`}</p>
+          </div>
+        )}
       </div>
     </div>
   )
