@@ -1,7 +1,7 @@
 """Question API routes - File-based quiz only."""
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, field_validator
+from typing import List, Optional
 import json
 import random
 from pathlib import Path
@@ -16,6 +16,12 @@ class AnswerOption(BaseModel):
     text: str
     is_correct: bool
     explanation: str = ""
+    
+    @field_validator('explanation', mode='before')
+    @classmethod
+    def validate_explanation(cls, v):
+        # Convert None to empty string
+        return v if v is not None else ""
 
 
 class QuestionResponse(BaseModel):
@@ -26,6 +32,12 @@ class QuestionResponse(BaseModel):
     concepts: List[str]
     difficulty: str
     explanation: str
+    
+    @field_validator('explanation', mode='before')
+    @classmethod
+    def validate_explanation(cls, v):
+        # Convert None to empty string
+        return v if v is not None else ""
 
 
 class FileQuizRequest(BaseModel):
