@@ -5,7 +5,7 @@ import { useUpload } from '../contexts/UploadContext'
 import type { ParsedDataResponse } from '../types'
 
 export default function CoursesPage() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [dragActive, setDragActive] = useState(false)
   const [parsedData, setParsedData] = useState<ParsedDataResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -51,66 +51,91 @@ export default function CoursesPage() {
     e.stopPropagation()
     setDragActive(false)
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0]
-      if (file.type === 'application/pdf') {
-        setSelectedFile(file)
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
+      if (files.length > 0) {
+        setSelectedFiles(prevFiles => [...prevFiles, ...files])
       }
     }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      if (file.type === 'application/pdf') {
-        setSelectedFile(file)
+    if (e.target.files) {
+      const files = Array.from(e.target.files).filter(file => file.type === 'application/pdf')
+      if (files.length > 0) {
+        setSelectedFiles(prevFiles => [...prevFiles, ...files])
       }
     }
+    // Reset the input value so the same files can be selected again
+    e.target.value = ''
   }
 
-  const handleRemove = () => {
-    setSelectedFile(null)
+  const handleRemove = (fileToRemove?: File) => {
+    if (fileToRemove) {
+      setSelectedFiles(prevFiles => prevFiles.filter(file => file !== fileToRemove))
+    } else {
+      setSelectedFiles([])
+    }
     setUploadError(null)
     setSuccess(null)
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) return
+    if (selectedFiles.length === 0) return
 
-    const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
     setUploading(true)
     setUploadError(null)
     setSuccess(null)
     
-    // Start global upload tracking
-    startUpload(uploadId, selectedFile.name)
+    const uploadPromises = selectedFiles.map(async (file) => {
+      const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      // Start global upload tracking
+      startUpload(uploadId, file.name)
+
+      try {
+        // Update status to processing
+        updateUpload(uploadId, { status: 'processing' })
+        
+        const result = await courseApi.uploadPdf(file)
+        
+        if (result.success) {
+          // Mark upload as successful
+          finishUpload(uploadId, true)
+          return { success: true, fileName: file.name, message: result.message }
+        } else {
+          finishUpload(uploadId, false, result.message || 'Upload failed')
+          return { success: false, fileName: file.name, message: result.message || 'Upload failed' }
+        }
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload PDF'
+        finishUpload(uploadId, false, errorMessage)
+        return { success: false, fileName: file.name, message: errorMessage }
+      }
+    })
 
     try {
-      // Update status to processing
-      updateUpload(uploadId, { status: 'processing' })
+      const results = await Promise.all(uploadPromises)
       
-      const result = await courseApi.uploadPdf(selectedFile)
+      // Check results
+      const successfulUploads = results.filter(r => r.success)
+      const failedUploads = results.filter(r => !r.success)
       
-      if (result.success) {
-        setSuccess(result.message)
-        setSelectedFile(null)
+      if (successfulUploads.length > 0) {
+        setSuccess(`Successfully uploaded ${successfulUploads.length} file(s): ${successfulUploads.map(r => r.fileName).join(', ')}`)
+        setSelectedFiles([])
         
-        // Reload the course data after successful upload
+        // Reload the course data after successful uploads
         await loadCourse()
-        
-        // Mark upload as successful
-        finishUpload(uploadId, true)
-      } else {
-        setUploadError(result.message || 'Upload failed')
-        finishUpload(uploadId, false, result.message || 'Upload failed')
+      }
+      
+      if (failedUploads.length > 0) {
+        setUploadError(`Failed to upload ${failedUploads.length} file(s): ${failedUploads.map(r => `${r.fileName} (${r.message})`).join(', ')}`)
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload PDF'
-      setUploadError(errorMessage)
-      console.error('Error uploading PDF:', errorMessage)
-      finishUpload(uploadId, false, errorMessage)
+      console.error('Error during bulk upload:', err)
+      setUploadError('An unexpected error occurred during upload')
     } finally {
       setUploading(false)
     }
@@ -126,34 +151,71 @@ export default function CoursesPage() {
         <div className="upload-section">
           <h2 className="section-title">Upload Course Material</h2>
           <p className="section-description">
-            Upload a PDF file to create a new course. The system will extract content and generate questions automatically.
+            Upload one or more PDF files to create courses. The system will extract content and generate questions automatically.
           </p>
 
           <div
-            className={`upload-area ${dragActive ? 'drag-active' : ''} ${selectedFile ? 'has-file' : ''}`}
+            className={`upload-area ${dragActive ? 'drag-active' : ''} ${selectedFiles.length > 0 ? 'has-file' : ''}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {selectedFile ? (
-              <div className="file-preview">
-                <div className="file-icon">📄</div>
-                <div className="file-info">
-                  <div className="file-name">{selectedFile.name}</div>
-                  <div className="file-size">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </div>
+            {selectedFiles.length > 0 ? (
+              <div className="files-preview">
+                <h3 className="files-title">Selected Files ({selectedFiles.length})</h3>
+                <div className="files-list">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="file-preview">
+                      <div className="file-icon">📄</div>
+                      <div className="file-info">
+                        <div className="file-name">{file.name}</div>
+                        <div className="file-size">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
+                      <button 
+                        className="remove-button" 
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleRemove(file)
+                        }}
+                        title={`Remove ${file.name}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <button className="remove-button" onClick={handleRemove}>
-                  ✕
-                </button>
+                <div className="upload-actions-inline">
+                  <label htmlFor="file-upload" className="upload-button">
+                    Add More Files
+                  </label>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleRemove()
+                    }}
+                    disabled={uploading}
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".pdf"
+                  multiple
+                  onChange={handleChange}
+                  className="file-input"
+                />
               </div>
             ) : (
               <>
                 <div className="upload-icon">📤</div>
                 <div className="upload-text">
-                  <p className="upload-title">Drag and drop your PDF here</p>
+                  <p className="upload-title">Drag and drop your PDFs here</p>
                   <p className="upload-subtitle">or</p>
                   <label htmlFor="file-upload" className="upload-button">
                     Browse Files
@@ -162,27 +224,31 @@ export default function CoursesPage() {
                     id="file-upload"
                     type="file"
                     accept=".pdf"
+                    multiple
                     onChange={handleChange}
                     className="file-input"
                   />
                 </div>
-                <p className="upload-hint">Supported format: PDF (max 10MB)</p>
+                <p className="upload-hint">Supported format: PDF (max 10MB each) • Select multiple files</p>
               </>
             )}
           </div>
 
-          {selectedFile && (
+          {selectedFiles.length > 0 && (
             <div className="upload-actions">
               <button 
                 className="btn-primary" 
                 onClick={handleUpload}
                 disabled={uploading}
               >
-                {uploading ? 'Uploading...' : 'Upload Course'}
+                {uploading ? `Uploading ${selectedFiles.length} file(s)...` : `Upload ${selectedFiles.length} Course${selectedFiles.length === 1 ? '' : 's'}`}
               </button>
               <button 
                 className="btn-secondary" 
-                onClick={handleRemove}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleRemove()
+                }}
                 disabled={uploading}
               >
                 Cancel
