@@ -36,8 +36,23 @@
   margin-bottom: var(--spacing-40);
 }
 
+.welcome-section h2 {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-32);
+  color: var(--color-text-white);
+  margin-bottom: var(--spacing-30);
+}
+
 .dashboard-content {
   padding-top: var(--spacing-40);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-20);
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-primary {
@@ -58,5 +73,26 @@
 }
 
 .btn-primary:hover {
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  display: inline-block;
+  width: 206px;
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-50);
+  background: transparent;
+  padding: var(--spacing-20);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-21);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.btn-secondary:hover {
   opacity: 0.8;
 }

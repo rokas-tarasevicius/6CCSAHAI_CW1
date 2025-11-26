@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { usePerformanceStore } from '../store/usePerformanceStore'
-import { questionsApi, performanceApi } from '../services/api'
+import { questionsApi, performanceApi, courseApi } from '../services/api'
 import { calculateScoreChange } from '../utils/scoreChange'
 import type { Question } from '../types'
 import QuestionCard from '../components/QuestionCard'
@@ -9,6 +10,7 @@ import './QuizPage.css'
 
 export default function QuizPage() {
   const { performance, setPerformance } = usePerformanceStore()
+  const [hasContent, setHasContent] = useState<boolean | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
   const [cachedQuestion, setCachedQuestion] = useState<Question | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -18,8 +20,22 @@ export default function QuizPage() {
   const [scoreChange, setScoreChange] = useState<number | undefined>(undefined)
 
   useEffect(() => {
-    loadQuestion()
+    checkForContentAndLoadQuestion()
   }, [])
+
+  const checkForContentAndLoadQuestion = async () => {
+    try {
+      const data = await courseApi.getCourse()
+      const hasFiles = data.files && Object.keys(data.files).length > 0
+      setHasContent(hasFiles)
+      
+      if (hasFiles) {
+        loadQuestion()
+      }
+    } catch (err) {
+      setHasContent(false)
+    }
+  }
 
   // Pre-generate next question in the background (async, non-blocking)
   const preloadNextQuestion = async (performanceData?: typeof performance) => {
@@ -136,7 +152,23 @@ export default function QuizPage() {
     }
   }
 
-  if (loading) {
+  // Check if content exists first
+  if (hasContent === false) {
+    return (
+      <div className="quiz-page">
+        <div className="no-content">
+          <h2>No Course Material Found</h2>
+          <p>You need to upload course materials before you can take a quiz.</p>
+          <p>Please upload PDF files to get started with personalized questions.</p>
+          <Link to="/courses" className="btn-primary">
+            Upload Course Material
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading || hasContent === null) {
     return (
       <div className="quiz-page">
         <div className="loading">Generating your question...</div>
@@ -148,7 +180,7 @@ export default function QuizPage() {
     return (
       <div className="quiz-page">
         <div className="error">{error}</div>
-        <button onClick={loadQuestion} className="btn-primary">
+        <button onClick={checkForContentAndLoadQuestion} className="btn-primary">
           Retry
         </button>
       </div>

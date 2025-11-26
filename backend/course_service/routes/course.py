@@ -89,12 +89,15 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="LLAMA_CLOUD_API_KEY environment variable not set")
 
     # Save file temporarily
+    original_file_name = file.filename # For saving later on
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
         tmp_file.write(file_content)
         tmp_path = tmp_file.name
 
     try:
         # Initialize parser (reduce workers for single file)
+        print(LLAMA_CLOUD_API_KEY)
+        print("path", tmp_path)
         parser = LlamaParse(
             api_key=LLAMA_CLOUD_API_KEY,
             num_workers=1,  # Use 1 worker for single file uploads
@@ -104,10 +107,13 @@ async def upload_pdf(file: UploadFile = File(...)):
 
         # Parse the file with timeout (5 minutes max)
         try:
+            print(f"Started parsing")
+            file_names:List[str] = [tmp_path]
             result = await asyncio.wait_for(
-                parse_files([tmp_path], parser),
-                timeout=300.0  # 5 minutes timeout
+                parse_files(file_names, parser),
+                timeout=300.0 # 5 minutes timeout
             )
+            print(f"Result: {result}")
         except asyncio.TimeoutError:
             raise HTTPException(
                 status_code=504,
@@ -119,6 +125,9 @@ async def upload_pdf(file: UploadFile = File(...)):
 
         if not parsed_data:
             raise HTTPException(status_code=500, detail="Failed to parse PDF - no data returned")
+        
+        # Modify the file name back to original for saving (and display)
+        parsed_data["metadata"]["file_name"] = original_file_name
 
         # Load existing parsed_data.json, update it, and save
         parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"

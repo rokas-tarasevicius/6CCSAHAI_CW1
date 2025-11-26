@@ -75,6 +75,8 @@ if __name__ == "__main__":
     file_names: List[str] = [
         "data/raw/LLMs.pdf",
         "data/raw/Transformers.pdf"
+        "data/raw/Week8 - LGT-slides.pdf",
+        "data/raw/Week9 - LGT.pdf"
     ]
     res = asyncio.run(
         parse_files(
