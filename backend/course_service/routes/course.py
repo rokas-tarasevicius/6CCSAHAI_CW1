@@ -22,6 +22,7 @@ from backend.quiz_service.services.question.generator import QuestionGenerator
 from backend.shared.services.llm.mistral_client import MistralClient
 from backend.course_service.models.course import CourseStructure, Topic, Subtopic, Concept
 from backend.quiz_service.models.question import DifficultyLevel
+from backend.shared.services.llm.pdf_summary import PDF_SUMMARY_SYSTEM_INSTRUCTION
 
 
 async def generate_quiz_for_file(file_name: str, content: str, num_questions: int = 5) -> List[Dict[str, Any]]:
@@ -95,7 +96,7 @@ async def generate_quiz_for_file(file_name: str, content: str, num_questions: in
         # Return empty quiz if generation fails
         return []
     
-async def generate_pdf_summary_for_file(file_name:str, content:str) -> str:
+async def generate_pdf_summary_for_file(file_name:str, prompt_data:Dict[str, Any]) -> str:
     """Generate a summary for a specific PDF file content.
     
     Args:
@@ -107,17 +108,12 @@ async def generate_pdf_summary_for_file(file_name:str, content:str) -> str:
     try:
         mistral_client = MistralClient()
         
-        # Use first 3000 chars to avoid token limits
-        content_preview = content[:3000] if len(content) > 3000 else content
-        
-        prompt = (
-            f"Provide a concise summary (2-3 sentences) of the following PDF content from '{file_name}':\n\n"
-            f"{content_preview}\n\n"
-            "Summary:"
-        )
+        # # Use first 3000 chars to avoid token limits
+        # content_preview = prompt_data["raw_text"][:3000] if len(prompt_data["raw_text"]) > 3000 else prompt_data["raw_text"]
+
         response = mistral_client.generate(
-            prompt=prompt,
-            system_message="You are an expert assistant that summarizes PDF documents effectively."
+            prompt=json.dumps(prompt_data, indent=4),
+            system_message=PDF_SUMMARY_SYSTEM_INSTRUCTION
         )
         print(f"Generated summary for {file_name}: {response.strip()}")
         
@@ -269,9 +265,15 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
         # Generate a summary of the file based on its content using LLM
+        pdf_summary_prompt_data = {
+            "file_name": original_file_name,
+            "raw_text": parsed_data["content"],
+            "topic": "", # TODO: Need to somehow generate a topic
+            "subtopic": "" # TODO: Need to somehow generate a subtopic
+        }
         pdf_summary = await generate_pdf_summary_for_file(
             file_name=original_file_name,
-            content=parsed_data["content"]
+            prompt_data=pdf_summary_prompt_data,
         )
         parsed_data["summary"] = pdf_summary
         print(f"Generated summary for {original_file_name}: {pdf_summary}")

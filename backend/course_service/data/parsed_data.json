@@ -5,33 +5,33 @@
             "file_type": "pdf",
             "content_length": 16065,
             "language": "en",
-            "extraction_timestamp": "2025-11-27T18:30:44.819502+00:00",
+            "extraction_timestamp": "2025-11-27T19:14:46.737718+00:00",
             "timezone": "utc"
         },
         "content": "Simple Neural    Feedforward networks for\nNetworks and     simple classification\nNeural\nLanguage\nModels\n---\nUse cases for feedforward networks\n\nLet's consider 2 (simplified) sample tasks:\n 1.  Text classification\n 2.  Language modeling\n\nState of the art systems use more powerful neural\nclassifiers like BERT/MLM classifiers, but simple models\nwill introduce some important ideas\n\n                                                 43\n---\nClassification: Sentiment Analysis\n\nWe could do exactly what we did with logistic\nregression\nInput layer are binary features as before\nOutput layer is 0 or 1                   U   \u03c3\n\n                                         W\n\n                                         x\u2081    x\u2099\n---\n+ or \u2212 to a review document doc. We\u2019ll represent each input ob\nfeatures x     ...x  of the input shown in the following table; Fig. 5.2\nSentiment Features\n 1             6\nin a sample mini test document.\n\n Var                 Definition                             Value i\n x1                  count(positive lexicon) \u2208 doc)         3\n x                   count(negative lexicon) \u2208 doc)         2\n x2                  \u21e2 1  if \u201cno\u201d \u2208 doc                     1\n          3          0    otherwise\n x                   count(1st and 2nd pronouns \u2208 doc)      3\n x4                  \u21e2 1  if \u201c!\u201d \u2208 doc                      0\n          5          0    otherwise\n x6                  log(word count of doc)                 ln(66)\n\n                                                          45\n---\nFeedforward nets for simple classification\n\n Logistic      W \u03c3    2-layer               U    \u03c3\n Regression                      feedforward\n\n               x\u2081     x\u2099         network    W\n               f\u2081    f\u2082    f\u2099               x\u2081     x\u2099\n                                            f\u2081    f\u2082    f\u2099\nJust adding a hidden layer to logistic regression       46\n                     46\n\n\u2022     allows the network to use non-linear interactions between features\n\u2022     which may (or may not) improve performance.\n---\n Reminder: Multiclass Outputs\n\n What if you have more than two output classes?\n \u25e6  Add more output units (one for each class)\n \u25e6  And use a \u201csoftmax layer\u201d\n\nsoftmax(zi)  eZi  1\u2264i\u2264D      U\n             =2$\n             k\n\n                             W\n\n                             x\u2081               x\u2099\n                                                47\n---\nThe output layer\n\n\u0177 could have two nodes (one each for positive and\nnegative), or 3 nodes (positive, negative, neutral).\n\u2022     \u0177\u2081 estimated probability of positive sentiment\n\u2022     \u0177\u2082 probability of negative\n\u2022     \u0177\u2083 probability of neutral\n---\nent, \u02c6                             \u02c6\n     y2 the probability of negative and y3 the probability of neutral\nequations would be just what we saw above for a 2-layer network (a\n          Equations for NN classification with hand features\n ntinue to use the s to stand for any non-linearity, whether sigmo\n ).\n\n          x  = [x1 , x2 , ...xd ]  (each xi is a hand-designed feature)\n          h  = s (Wx + b)\n          z  = Uh\n   \u02c6\n   y         = softmax(z)\n\n10 shows a sketch of this architecture. As we mentioned earlier, ad\nlayer to our logistic regression classifier allows the network to repr\n---\ndessert  wordcount               x1            h1            ^\n         =3                                    h2            y1  p(+)\n\nwas            positive lexicon  x2                          ^\n               words = 1                       h3            y2  p(-)\n\n                                                             ^\ngreat  count of \u201cno\u201d             x3            \u2026             y3  p(neut)\n            = 0                             hdh\n\nInput words                      x     W       h             U  y\n                            [d\u2a091]      [dh\u2a09d]  [dh\u2a091]  [3\u2a09dh]   [3\u2a091]\n\n                            Input layer        Hidden layer     Output layer\n                            d=3 features                        softmax\n---\nVectoring for parallelizing inference\n\nWe would like to efficiently classify the whole test\nset of m observations.\nSo we vectorize: pack all the input features into X\n\u2022     Each row x(i) of X is a row vector with all the\n      features for example x(i)\n\u2022     Feature dimensionality is d, X is [m x d]\n---\nBecause we are now modeling each input as a row vector rather than a colum\ntor, we also need to slightly modify Eq. 6.19. X is of shape [m \u21e5 d ] and W is\n e [d  Slight changes to equations\n    h \u21e5 d ], so we\u2019ll reorder how we multiply X and W and transpose W so th\n ectly multiply to yield a matrix H of shape [m \u21e5 dh ]. 1\nThe    Each input is now a row vector\n     bias vector b from Eq. 6.19 of shape [1 \u21e5 dh ] will now have to be replicat\na matrix of shape [m \u21e5 dh ]. We\u2019ll need to similarly reorder the next step a\nspose \u2022    X is of shape [m x d]  \u02c6\n       U. Finally, our output matrix Y will be of shape [m \u21e5 3] (or more ge\nly [m \u2022    W is of shape [d x d]\n       \u21e5 d ], where d is the number of output classes), with each row i of o\n           o \u02c6    o   h            \u02c6 (i)\n ut matrix Y consisting of the output vector y  .\u2018 Here are the final equations f\n      \u2022    We'll need to do some reordering and transposing\n puting the output class distribution for an entire test set:\n      \u2022    Bias vector b that used to be [1 x d\u2095] is now [m x d\u2095]\n                            H = s (XW| + b)\n                            Z = HU|\n                            \u02c6\n                            Y = softmax(Z)                       (6.2\n---\nSimple Neural    Feedforward networks for\nNetworks and     simple classification\nNeural\nLanguage\nModels\n---\nSimple Neural    Embeddings as input to\nNetworks and     feedforward classifiers\nNeural\nLanguage\nModels\n---\n Even better: representation learning\n\nThe real power of deep learning comes   U \u03c3\nfrom the ability to learn features from\nthe data                                W\nInstead of using hand-built human-\nengineered features for classification  x\u2081    x\u2099\nUse learned representations like        e\u2081    e\u2082    e\u2099\nembeddings!\n\n                                                    55\n---\nEmbedding matrix E\n\n\u2022     An embedding is a vector of dimension [1 x d]\n      that represents the input token.\n\u2022     An embedding matrix E is a dictionary, one row\n      per token of vocab V\n\u2022     E has shape [|V| \u00d7 d]\n\u2022     Embedding matrices are central to NLP; they\n      represent input text in LLMs and all NLP tools\n---\nText classification from embeddings\n\n\u2022     Given tokenized input: dessert was great\n\u2022     Select the embedding vectors from E:\n     1.  Convert BPE tokens into vocabulary indices\n      \u2022  w = [3, 9824, 226]\n     2.  Use indexing to select the corresponding rows from E\n      \u2022  row 3, row 4000, row 10532\n---\n                                  Another way to think about selecting token embeddings from the\nAnother way to think of indexing from E\n                          matrix is to represent input tokens as one-hot vectors of shape [1 \u21e5 |V\n       one-hot vector     one dimension for each word in the vocabulary. Recall that in a one-h\n                          the elements are 0 except one, the element whose dimension is the w\n\n\u2022     Treat each in the vocabulary, which has value 1. So if the word \u201cdessert\u201d has in\n                         input word as one-hot vector\n                          vocabulary, x3 = 1, and xi = 0 8i = 3, as shown here:\n   \u2022   If dessert is index 3:     [0 0 1 0 0 0 0 ... 0 0 0 0]\n                                  1 2 3 4 5 6 7 ...      ... |V|\n\n\u2022     Multiply it by Multiplying by a one-hot vector that has only one non-zero element x\n                                  E to select out the embedding for\n                          selects out the relevant row vector for word i, resulting in the embeddin\n      dessert as depicted in Fig. 6.11.                  d\n\n       3                  |V|     \u2715 3 3  |V|              = 3 1  d             d  d\n     1 0 0 1 0 0 0 0 \u2026 0 0 0 0      1 0 0 1 0 0 0 0 \u2026 0 E  \u2715     E             =  1\n                                         0 0 0\n\n                                      |V|                     |V|\n                          Figure 6.11  Selecting the embedding vector for word V by multiplying th\n---\nCollecting embeddings from E for N words\n\n                              d\n                    |V|                 d\n\n   0 0 1 0 0 0 0 \u2026 0 0 0 0    \u2715  =\n   0 0 0 0 0 0 0 \u2026 0 0 1 0       E\n   1 0 0 0 0 0 0 \u2026 0 0 0 0\n\nN  0 0 0 0 1 0 \u2026                 |  |    N\n   0 \u2026 0 0 0 0                   V\n\nGiven window of N tokens, represented by N [1 \u00d7 d]\nembeddings\nNeed to return a single class (e.g., pos or neg)\n---\nText comes in different lengths\nGiven window of N tokens, represented by N [1 \u00d7 d]\nembeddings, return a single class (e.g., pos or neg)\n1.  Concatenate all the inputs into one long vector of\n    shape [1\u00d7dN], i.e. input is length N of longest review\n   \u2022     If shorter then pad with zero embeddings\n   \u2022     Truncate if you get longer reviews at test time\n2.  Pool the inputs into a single short [1 \u00d7 d] vector. A\n    single \"sentence embedding\" (the same\n    dimensionality as a word) to represent all the\n    words. Less info, but very efficient and fast.\n---\n   For example, for a text with N input words/tokens w1 , ..., wN , we want to turn\n  A pooling function is a way to turn a set of embeddings into a single embeddin\nhe N row embeddings e(w ), ..., e(w ) (each of dimensionality d ) into a single\n    Pooling          1              N\n  For example, for a text with N input words/tokens w1 , ..., wN , we want to tu\n mbedding also of dimensionality d .\ne N row embeddings e(w1 ), ..., e(wN ) (each of dimensionality d ) into a sing\n   There are various ways to pool. The simplest is mean-pooling: taking the mean\n bedding also of dimensionality d .\n y summing the embeddings and then dividing by N :\n    Intuition: exact position not so important for sentiment.\n  There are various ways to pool. The simplest is mean-pooling: taking the mea\n summing the embeddings and then dividing by N :\n                                      N\n    We'll just do some                X\n                          sort of averaging of all the vectors.\n                          xmean = 1    e(wi )                       (6.21)\n    Mean pooling:                   N N\n                                    1 X\n ere are the              xmean = N i=1 e(wi )                      (6.2\n                equations for this classifier assuming mean pooling:\n                                      i=1\n re are the       x = mean(e(w ), e(w ), . . . , e(w ))\n                equations for this classifier assuming mean pooling:\n                                    1    2           n\n                  h = s (xW + b)\n                 x  = mean(e(w1 ), e(w2 ), . . . , e(wn ))\n                  z = hU\n                 h  = s (xW + b)\n    \u02c6\n    y               = softmax(z)                                    (6.22)\n---\nPooling                           p(+)  p(-) p(neut)                  Output probabilities\n                                  ^     ^    ^\n                                  y1    y2   y3         y          [1\u2a093]  Output layer softmax\n\n                                                          U [d\u02b0\u2a093]          weights\n\n                                h1    h2    h3  \u2026 hdh   h [1\u2a09d\u2095]          Hidden layer\n\n                                                                   W [d\u2a09\u1d48\u2095] weights\n                                                        x          [1\u2a09d]  Input layer\n\n                                          +  pooling                      pooled embedding\n           embedding for \u201cdessert\u201d\n           embedding for \u201cwas\u201d                                        N\u2a09d   embeddings\n           embedding for \u201cgreat\u201d\n\n           E                         E                  E             |V|\u2a09d  E matrix\n           1    3                   |V|  1  524  |V|    1  902     |V|    N\u2a09|V|  shared across words\n           0 0  1               0 0                                              one-hot vectors\n                                         0 0  0 1  0 0\n           \u201cdessert\u201d = V3                \u201cwas\u201d = V524   0 0  0  1  0 0\n                                                        \u201cgreat\u201d = V902\n\n           dessert                            was            great         Input words\n---\nSimple Neural    Embeddings as input to\nNetworks and     feedforward classifiers\nNeural\nLanguage\nModels\n---\nSimple Neural    Neural language modeling with\nNetworks and     feedforward networks\nNeural\nLanguage\nModels\n---\nNeural Language Models (LMs)\n\nLanguage Modeling: Calculating the probability of the\nnext word in a sequence given some history.\n\u2022     We've seen N-gram based LMs\n\u2022     But neural network LMs far outperform n-gram\n      language models\nState-of-the-art neural LMs are based on more\npowerful neural network technology like Transformers\nBut simple feedforward LMs introduce many of the\nimportant concepts\n                                                  65\n---\nvast amounts of energy to train, and are less interpretable than\n    Simple feedforward Neural Language Models\n for some smaller tasks an n-gram language model is still the righ\nforward neural language model is a feedforward network that\n e  t  Task: predict next word w\n       a representation of some number of previous words (w  , w\n       given prior words w t    , w , w , \u2026    t \u22121\n s a probability distribution over possible next words. Thus\u2014lik\n               t-1                  t-2  t-3\n  the Problem: Now we\u2019re dealing with sequences of\n       feedforward neural LM approximates the probability of a w\n       arbitrary length.\n rior context  P(wt |w1:t \u22121 ) by approximating based on the N \u2212 1\n       Solution: Sliding windows (of fixed length)\n\n       P(wt |w1 , . . . , wt \u22121 ) \u2248 P(wt |wt \u2212N +1 , . . . , wt \u22121 )\n\nwing examples we\u2019ll use a 4-gram example, so we\u2019ll show a neur\n                                                                    66\n---\n    Inference in a Feedforward Language Model\n\n    p(wt=aardvark|w\u209c\u208b\u2083,w\u209c\u208b\u2082,w\u209c\u208b\u2081)     p(wt=do|\u2026) p(wt=fish|\u2026)  p(wt=zebra|\u2026)\n\n    ^  \u2026                           ^      \u2026      ^    \u2026 ^  \u2026 ^\noutput layer y  y1                 y34           y42  y35102   y|V|  1\u2a09|V|\n   softmax                                  U                  dh\u2a09|V|\n\n       hidden layer h    h1  h2    h3  \u2026 hdh                                      1\u2a09dh\n\n                                   W                                Nd\u2a09dh\n\n    embedding layer e                                                             1\u2a09Nd\nE is shared              E         E                             E  |V|\u2a09d\nacross words             1  35  |V|  1  992  |V|  1                 451  |V|      N\u2a09|V|\nInput layer\n  one-hot                0 0  1  0 0    0 0  0 1  0 0    0 0     0  1    0 0\n  vectors                \u201cfor\u201d = V35    \u201call\u201d = V992     \u201cthe\u201d = V451\n\n    ...\n    \u2026 and thanks                 for         all         the                ?     \u2026\n\n                              wt-3           wt-2        wt-1               wt         67\n---\n hot   Feedforward language model equations\n       input vectors for each input context word, are:\n\n       e        = [Ex\u209c\u2212\u2083 ; Ex\u209c\u2212\u2082 ; Ex\u209c\u2212\u2081 ]\n       h        = s (We + b)\n             z  = Uh\n   \u02c6\n   y            = softmax(z)                          (6.2\n       So \u0177    is the probability of the next word w being\nsemicolons to mean concatenation of vectors, so we form the\n       V 42                               t\ne by     = fish\n       concatenating the 3 embeddings for the three context vecto\n       42\nthis idea of using neural networks to do language modeling in\n---\nWhy Neural LMs work better than N-gram LMs\n\nTraining data:\nWe've seen: I have to make sure that the cat gets fed.\nNever seen: dog gets fed\nTest data:\nI forgot to make sure that the dog gets ___\nN-gram LM can't predict \"fed\"!\nNeural LM can use similarity of \"cat\" and \"dog\"\nembeddings to generalize and predict \u201cfed\u201d after dog\n---\nSimple Neural    Neural language modeling with\nNetworks and     feedforward networks\nNeural\nLanguage\nModels\n\n",
         "quiz": [
             {
-                "question_text": "What is the primary purpose of a feedforward neural network in the context of simple classification?",
+                "question_text": "What is the primary purpose of feedforward networks in the context of neural networks?",
                 "answers": [
                     {
-                        "text": "To perform simple classification tasks by processing input data through layers to produce output classifications",
+                        "text": "To perform simple classification tasks like sentiment analysis",
                         "is_correct": true,
-                        "explanation": "The concept description and context explicitly state that feedforward neural networks are used for simple classification tasks, processing input data through layers to produce classifications."
+                        "explanation": "The content explicitly states that feedforward networks are used for simple classification tasks such as sentiment analysis."
                     },
                     {
-                        "text": "To generate new data samples based on learned patterns",
+                        "text": "To generate new text based on input data",
                         "is_correct": false,
-                        "explanation": "This describes a generative model, not the primary purpose of a feedforward neural network for classification."
+                        "explanation": "This is a function of language models, not feedforward networks."
                     },
                     {
-                        "text": "To predict continuous values for regression problems",
+                        "text": "To process sequential data in order",
                         "is_correct": false,
-                        "explanation": "This describes regression tasks, not the classification tasks that feedforward networks are used for in this context."
+                        "explanation": "This describes recurrent neural networks, not feedforward networks."
                     },
                     {
-                        "text": "To analyze and interpret the structure of neural networks",
+                        "text": "To perform complex reasoning tasks",
                         "is_correct": false,
-                        "explanation": "This describes a meta-analysis task, not the primary purpose of a feedforward neural network for classification."
+                        "explanation": "Feedforward networks are used for simple classification, not complex reasoning."
                     }
                 ],
                 "topic": "Nns",
@@ -43,27 +43,27 @@
                 "explanation": ""
             },
             {
-                "question_text": "What are the two sample tasks considered for feedforward networks in the provided context?",
+                "question_text": "What are the two simplified sample tasks considered for feedforward networks?",
                 "answers": [
                     {
                         "text": "Text classification and language modeling",
                         "is_correct": true,
-                        "explanation": "The content explicitly lists these two tasks as sample tasks for feedforward networks."
+                        "explanation": "The content explicitly lists these as the two simplified sample tasks for feedforward networks."
                     },
                     {
                         "text": "Image recognition and speech synthesis",
                         "is_correct": false,
-                        "explanation": "These tasks are not mentioned in the provided context."
+                        "explanation": "These tasks are not mentioned in the provided content context."
                     },
                     {
-                        "text": "Data clustering and anomaly detection",
+                        "text": "Sentiment analysis and regression",
                         "is_correct": false,
-                        "explanation": "These tasks are not listed as sample tasks for feedforward networks in the provided context."
+                        "explanation": "While sentiment analysis is mentioned, regression is not listed as a simplified task."
                     },
                     {
-                        "text": "Time series forecasting and reinforcement learning",
+                        "text": "Neural translation and data clustering",
                         "is_correct": false,
-                        "explanation": "These tasks are not mentioned in the provided context."
+                        "explanation": "These tasks are not referenced in the provided content context."
                     }
                 ],
                 "topic": "Nns",
@@ -75,27 +75,27 @@
                 "explanation": ""
             },
             {
-                "question_text": "What is the output layer in a simple classification task using logistic regression?",
+                "question_text": "What is the output layer of a simple neural network for sentiment analysis?",
                 "answers": [
                     {
                         "text": "A single node with a sigmoid activation function",
                         "is_correct": true,
-                        "explanation": "The content context specifies that for a simple classification task using logistic regression, the output layer is a single node with a sigmoid activation function."
+                        "explanation": "The content context specifies that the output layer for sentiment analysis in a simple neural network is a single node with a sigmoid activation function, producing a binary output (0 or 1)."
                     },
                     {
                         "text": "Multiple nodes with softmax activation function",
                         "is_correct": false,
-                        "explanation": "This is used for multiclass classification, not simple binary classification with logistic regression."
+                        "explanation": "While multiple nodes with a softmax activation function are used for multiclass classification, the question specifies a simple neural network for sentiment analysis, which typically uses a single node with a sigmoid activation function."
                     },
                     {
-                        "text": "A single node with a ReLU activation function",
+                        "text": "A layer with linear activation function",
                         "is_correct": false,
-                        "explanation": "ReLU is not used in logistic regression; sigmoid is the correct activation function for binary classification."
+                        "explanation": "The output layer for sentiment analysis uses a sigmoid activation function, not a linear activation function, to produce a binary output."
                     },
                     {
-                        "text": "A single node with a linear activation function",
+                        "text": "A hidden layer with ReLU activation function",
                         "is_correct": false,
-                        "explanation": "Linear activation is not used in logistic regression; sigmoid is the correct activation function for binary classification."
+                        "explanation": "The hidden layer may use a ReLU activation function, but the output layer for sentiment analysis specifically uses a sigmoid activation function."
                     }
                 ],
                 "topic": "Nns",
@@ -107,91 +107,27 @@
                 "explanation": ""
             },
             {
-                "question_text": "What does the variable x1 represent in the sentiment features table?",
-                "answers": [
-                    {
-                        "text": "The count of positive lexicon words in the document",
-                        "is_correct": true,
-                        "explanation": "The concept description explicitly defines x1 as the count of positive lexicon words in the document."
-                    },
-                    {
-                        "text": "The count of negative lexicon words in the document",
-                        "is_correct": false,
-                        "explanation": "This is the definition of x2, not x1, as per the sentiment features table."
-                    },
-                    {
-                        "text": "The presence of the word 'no' in the document",
-                        "is_correct": false,
-                        "explanation": "This is the definition of x3, not x1, as per the sentiment features table."
-                    },
-                    {
-                        "text": "The log of the word count of the document",
-                        "is_correct": false,
-                        "explanation": "This is the definition of x6, not x1, as per the sentiment features table."
-                    }
-                ],
-                "topic": "Nns",
-                "subtopic": "Main Content",
-                "concepts": [
-                    "Nns"
-                ],
-                "difficulty": "easy",
-                "explanation": ""
-            },
-            {
-                "question_text": "What does the variable x2 represent in the sentiment features table?",
-                "answers": [
-                    {
-                        "text": "A binary indicator of whether the word 'no' appears in the document",
-                        "is_correct": true,
-                        "explanation": "The concept description explicitly states that x2 is 1 if 'no' is in the document, and 0 otherwise."
-                    },
-                    {
-                        "text": "The count of negative lexicon words in the document",
-                        "is_correct": false,
-                        "explanation": "The count of negative lexicon words is represented by x2, not x2."
-                    },
-                    {
-                        "text": "The count of first and second pronouns in the document",
-                        "is_correct": false,
-                        "explanation": "The count of first and second pronouns is represented by x3, not x2."
-                    },
-                    {
-                        "text": "A binary indicator of whether an exclamation mark appears in the document",
-                        "is_correct": false,
-                        "explanation": "The presence of an exclamation mark is represented by x4, not x2."
-                    }
-                ],
-                "topic": "Nns",
-                "subtopic": "Main Content",
-                "concepts": [
-                    "Nns"
-                ],
-                "difficulty": "easy",
-                "explanation": ""
-            },
-            {
-                "question_text": "What is the purpose of adding a hidden layer to logistic regression?",
+                "question_text": "What is the purpose of adding a hidden layer to logistic regression in feedforward networks?",
                 "answers": [
                     {
                         "text": "To allow the network to use non-linear interactions between features",
                         "is_correct": true,
-                        "explanation": "The content explicitly states that adding a hidden layer to logistic regression allows the network to use non-linear interactions between features."
+                        "explanation": "The content explicitly states that adding a hidden layer allows the network to use non-linear interactions between features."
                     },
                     {
                         "text": "To increase the number of input features",
                         "is_correct": false,
-                        "explanation": "The content does not mention that adding a hidden layer increases the number of input features."
+                        "explanation": "The content does not mention increasing the number of input features as a purpose of adding a hidden layer."
                     },
                     {
-                        "text": "To reduce the computational complexity of the model",
+                        "text": "To reduce the computational complexity of the network",
                         "is_correct": false,
                         "explanation": "The content does not suggest that adding a hidden layer reduces computational complexity."
                     },
                     {
-                        "text": "To enable the model to handle more output classes",
+                        "text": "To enable the network to handle more than two output classes",
                         "is_correct": false,
-                        "explanation": "The content states that adding more output units handles more classes, not adding a hidden layer."
+                        "explanation": "The content mentions handling more output classes with a softmax layer, not by adding a hidden layer."
                     }
                 ],
                 "topic": "Nns",
@@ -203,27 +139,59 @@
                 "explanation": ""
             },
             {
-                "question_text": "What is the output layer in a neural network classification task with hand features?",
+                "question_text": "What is the role of the softmax layer in multiclass outputs?",
                 "answers": [
                     {
-                        "text": "A softmax layer with multiple nodes, one for each class",
+                        "text": "The softmax layer converts output values into probabilities for each class",
                         "is_correct": true,
-                        "explanation": "The output layer in a neural network classification task with hand features uses a softmax layer with multiple nodes, one for each class, to output probabilities for each class."
+                        "explanation": "The softmax layer is used to convert the output values into probabilities for each class in a multiclass classification problem, as described in the content context."
                     },
                     {
-                        "text": "A single node with a sigmoid activation function",
+                        "text": "The softmax layer increases the dimensionality of the output features",
                         "is_correct": false,
-                        "explanation": "This is incorrect because the output layer for classification tasks typically requires multiple nodes for each class, not a single node."
+                        "explanation": "The softmax layer does not increase the dimensionality of the output features; it converts the output values into probabilities."
                     },
                     {
-                        "text": "A hidden layer with non-linear activation",
+                        "text": "The softmax layer is used only for binary classification tasks",
                         "is_correct": false,
-                        "explanation": "This is incorrect because the output layer is specifically designed to produce the final classification probabilities, not to perform non-linear transformations."
+                        "explanation": "The softmax layer is used for multiclass classification, not just binary classification, as indicated by the context."
                     },
                     {
-                        "text": "A linear layer with no activation function",
+                        "text": "The softmax layer reduces the number of output classes",
                         "is_correct": false,
-                        "explanation": "This is incorrect because the output layer requires an activation function like softmax to convert the outputs into probabilities."
+                        "explanation": "The softmax layer does not reduce the number of output classes; it assigns probabilities to each class."
+                    }
+                ],
+                "topic": "Nns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Nns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What are the three possible output nodes for sentiment analysis in a neural network?",
+                "answers": [
+                    {
+                        "text": "Positive, Negative, Neutral",
+                        "is_correct": true,
+                        "explanation": "The content explicitly states that the output layer for sentiment analysis can have three nodes representing positive, negative, and neutral sentiments."
+                    },
+                    {
+                        "text": "Positive, Negative",
+                        "is_correct": false,
+                        "explanation": "While the content mentions two nodes for positive and negative sentiments, it also explicitly includes a third node for neutral sentiment."
+                    },
+                    {
+                        "text": "Happy, Sad, Angry",
+                        "is_correct": false,
+                        "explanation": "These are emotional states but are not the specific terms used in the content for sentiment analysis output nodes."
+                    },
+                    {
+                        "text": "Good, Bad, Indifferent",
+                        "is_correct": false,
+                        "explanation": "These terms are synonymous with positive, negative, and neutral but are not the exact terms used in the content."
                     }
                 ],
                 "topic": "Nns",
@@ -235,7 +203,7 @@
                 "explanation": ""
             }
         ],
-        "summary": "The document \"NNs.pdf\" discusses the application of simple feedforward neural networks for text classification and language modeling. It introduces the concept of using neural networks for sentiment analysis, where input features are designed to represent aspects of a text document, and the network's output predicts the sentiment class. The document also explains how adding a hidden layer to logistic regression allows for non-linear interactions between features, potentially improving performance, and how to handle multiclass outputs using a softmax layer."
+        "summary": "Purpose of the Document:\nThe document discusses the use of simple feedforward neural networks for text classification and language modeling. It introduces key concepts and methods for implementing these networks, highlighting their advantages over traditional methods.\n\nMain Ideas:\n\u2022 Use of feedforward networks for text classification and language modeling\n\u2022 Representation of text using embeddings and pooling methods\n\u2022 Advantages of neural language models over n-gram models\n\nKey Concepts:\n\u2022 Feedforward networks\n\u2022 Text classification\n\u2022 Language modeling\n\u2022 Embeddings\n\u2022 Pooling\n\u2022 Softmax layer\n\u2022 One-hot vectors\n\u2022 Mean-pooling\n\u2022 Neural language models\n\nKey Takeaways:\n\u2022 Feedforward networks can be used for text classification and language modeling.\n\u2022 Embeddings represent input tokens as vectors, improving feature representation.\n\u2022 Pooling methods such as mean-pooling condense multiple word embeddings into a single vector.\n\u2022 Neural language models outperform n-gram models by leveraging embeddings and similarity.\n\u2022 Softmax layers are used for multiclass classification outputs.\n\u2022 One-hot vectors are used to represent input tokens for embedding selection.\n\u2022 Mean-pooling averages embeddings to create a single representation of a text."
     },
     "data/raw/LLMs.pdf": {
         "metadata": {
@@ -243,33 +211,33 @@
             "file_type": "pdf",
             "content_length": 16593,
             "language": "en",
-            "extraction_timestamp": "2025-11-27T18:31:17.575137+00:00",
+            "extraction_timestamp": "2025-11-27T19:15:08.585936+00:00",
             "timezone": "utc"
         },
         "content": "Large       Introduction to Large Language\nLanguage    Models\nModels\n---\nLarge language models\n\nComputational agents that can interact\nconversationally with people using natural language\nLLMS have revolutionized the field of NLP and AI\n---\nLanguage models\n\n\u2022       Remember the simple n-gram language model\n   \u2022     Assigns probabilities to sequences of words\n   \u2022     Generate text by sampling possible next words\n   \u2022     Is trained on counts computed from lots of text\n\u2022       Large language models are similar and different:\n   \u2022     Assigns probabilities to sequences of words\n   \u2022     Generate text by sampling possible next words\n   \u2022     Are trained by learning to guess the next word\n---\n Fundamental intuition of large language models\n\nText contains enormous amounts of knowledge\nPretraining on lots of text with all that knowledge is\n what gives language models their ability to do so\n much\n---\nWhat does a model learn from pretraining?\n\n\u2022     With roses, dahlias, and peonies, I was\n      surrounded by flowers\n\u2022     The room wasn't just big it was enormous\n\u2022     The square root of 4 is 2\n\u2022     The author of \"A Room of One's Own\" is Virginia\n      Woolf\n\u2022     The doctor told me that he\n---\n    What is a large language model?\n    A neural network with:\n    Input: a context or prefix,\n    Output: a distribution over possible next words\n\n                                                   p(w|context)\n                               output              all     .44\n\n                                                the        .33\n                                               your        .15\n    Transformer (or other decoder)             that        .08\n\n input                                ?\ncontext  So  long  and    thanks  for\n---\nLLMs can generate!\n\nA model that gives a probability distribution over next words can generate\nby repeatedly sampling from the distribution\n\n                  p(w|context)\n                  output                  all    .44\n\n                            the                  .33\n                                         your    .15\nTransformer (or other decoder)    that           .08\n                                  \u2026               \u2026\n\nSo  long  and  thanks  for  all                  p(w|context)\n                                   output        the   .77\n\n                                                 your  .22\n                                              our      .07\n          Transformer (or other decoder)       of      .02\n                                                 \u2026     \u2026\n\n          So  long  and  thanks    for  all  the\n---\nThree architectures for large language models\nw w                                          w\n\nw w w w w\n\nw  w     w w w   w  w  w w w   w  w w\n\n   Decoder                        Encoder-Decoder\nDecoders         Encoders      Encoder-decoders\n                    Encoder\n\nGPT, Claude,     BERT family,  Flan-T5, Whisper\nLlama            HuBERT\nMixtral\n---\nDecoders                                    w w w w        w\n\n                                            w  w  w w      w  w\nWhat most people think of when we say LLM Decoder\n\u2022     GPT, Claude, Llama, DeepSeek, Mistral\n\u2022     A generative model\n\u2022     It takes as input a series of tokens, and iteratively\n      generates an output token one at a time.\n\u2022     Left to right (causal, autoregressive)\n---\nEncoders              w     w w w w\n\n\u2022  Masked Language Models (MLMs)\n                      w     w  w w w  w  w  w  w     w\n\u2022  BERT family              Decoder      Encoder\n\n\u2022  Trained by predicting words from surrounding\n   words on both sides\n\u2022  Are usually finetuned (trained on supervised data)\n   for classification tasks.\n---\nEncoder-Decoders    w w w\nw w  w  w w\n\n\u2022          w  w  w  w w  w  w  w  w w  w  w  w\n    Trained to map from one sequence to another\n\u2022   Very      Decoder       Encoder       Encoder-Decoder\n           popular for:\n   \u2022     machine translation (map from one language to\n         another)\n   \u2022     speech recognition (map from acoustics to words)\n---\nLarge       Introduction to Large Language\nLanguage    Models\nModels\n---\nLarge       Pretraining Large Language\nLanguage    Models\nModels\n---\n    Three stages of training in LLMs\n\n    Instruction Data    Preference Data\n\nPretraining    Label sentiment of this sentence:    Human: How can I embezzle money?\n    The movie wasn\u2019t that great\n    Data    Summarize: Hawaii Electric urges       Assistant: Embezzling is a\n        caution as crews replace a utility pole    felony, I can't help you\u2026\n             overnight on the highway from\u2026         Assistant: Start by creating\n\n    Translate English to Chinese:                   fake expense reports...\n    When does the flight arrive?\n\n    1. Pretraining    2. Instruction    3. Preference\n                         Tuning            Alignment\n\nPretrained    Instruction    Aligned LLM\n   LLM         Tuned LLM\n---\nPretraining\n\nThe big idea that underlies all the amazing\nperformance of language models\n\nFirst pretrain a transformer model on enormous\namounts of text\nThen apply it to new tasks.\n---\nSelf-supervised training algorithm\n\nWe train them to predict the next word!\n1. Take a corpus of text\n2. At each time step t\n i.      ask the model to predict the next word\n ii.     train the model using gradient descent to minimize the\n         error in this prediction\n\n \"Self-supervised\" because it just uses the next word as the\n label!\n---\nIntuition of language model training: loss\n\n\u2022         Same loss function: cross-entropy loss\n     \u2022     We want the model to assign a high probability to true\n           word w\n     \u2022     = want loss to be high if the model assigns too low a\n           probability to w\n\u2022         CE Loss: The negative log probability that the model\n          assigns to the true next word w\n     \u2022     If the model assigns too low a probability to w\n     \u2022     We move the model weights in the direction that assigns a\n           higher probability to w\n---\n                    L   = \u2212        y [w] log \u02c6\nl to minimize the   CE             t             yt [w]\n                    error in predicting the true next word in the training sequ\n       Cross                 w\u2208V\n                 -entropy loss for language modeling\ncross-entropy as the loss function.\necall that the cross-entropy loss measures the difference between a pred\n of language modeling, the correct distribution        yt comes from kn\nbility distribution and the correct distribution.\n       CE loss: difference between the correct probability distribution and the predicted\n . This is represented as a one-hot vector corresponding to the v\n       distribution       X\nentry for the actual next word is 1, and all the other entries are\n                       L  = \u2212      y [w] log \u02c6\nentropy loss           CE          t    yt [w]                                           (\n                       for language modeling is determined by the proba\n                               w\u2208V\n igns to the correct next word (all other words get multiplied by\n ase   The correct distribution y knows the next word, so is 1 for the actual next\n   of language modeling, the correct distribution y comes from knowin\nthe CE loss in (10.5)        t                    t\n       word and 0 for the   can be simplified as the negative log prob\nord. This is                others.\n                 represented as a one-hot vector corresponding to the vocabu\n       So in this sum, all terms get multiplied by zero except one: the logp the\n igns to the next word in the training sequence.\nthe entry for the actual next word is 1, and all the other entries are 0. T\n       model assigns to the correct next word, so:\n ss-entropy loss for language modeling is determined by the probability\n                       L    ( \u02c6                   \u02c6\nl assigns to the       CE    yt , yt ) = \u2212 log yt [wt +1 ]\n                       correct next word (all other words get multiplied by zero\n t the CE loss in (10.5) can be simplified as the negative log probabilit\n---\nTeacher forcing\n\n\u2022     At each token position t, model sees correct tokens w1:t,\n     \u2022  Computes loss (\u2013log probability) for the next token wt+1\n\u2022     At next token position t+1 we ignore what model predicted\n      for w\u209c\u208a\u2081\n     \u2022  Instead we take the correct word w\u209c\u208a\u2081, add it to context, move on\n---\nTraining a transformer language model\n\nTrue next token  long        and        thanks        for        all           \u2026\n\nCE Loss          \u2212log ylong  \u2212log yand  \u2212log ythanks  \u2212log yfor  \u2212log yall     \u2026\nper token\n\n                 \u0177  back     \u0177  back    \u0177  back       \u0177  back    \u0177  back\n                    prop        prop       prop          prop       prop\n\nLLM                                                                            \u2026\n\nInput tokens  So  long  and  thanks  for    \u2026\n---\n LLMs are mainly trained on the web\n\nCommon crawl, snapshots of the entire web produced by\n the non- profit Common Crawl with billions of pages\nColossal Clean Crawled Corpus (C4; Raffel et al. 2020), 156\n billion tokens of English, filtered\n What's in it? Mostly patent text documents, Wikipedia, and\n news sites\n---\nThe Pile: a pretraining corpus\nComposition of the Pile by Category\nacademics    web                   books\n             Academic Internet Prose DialogueMisc\n\n                                                                 Bibliotik\n\nPile-CC                                                          PG-19       BC2\n\nPubMed Central    ArXiv\n                                                                             Subtitles\n                                                                                      dialog\n\n                  PMA    StackExchange                           Github      IRC EP\nFreeLaw           USPTO  Phil  NIH OpenWebText2    Wikipedia     DM Math     HN  YT\n---\nFiltering for quality and safety\n\nQuality is subjective\n\u2022     Many LLMs attempt to match Wikipedia, books, particular\n      websites\n\u2022     Need to remove boilerplate, adult content\n\u2022     Deduplication at many levels (URLs, documents, even lines)\nSafety also subjective\n\u2022     Toxicity detection is important, although that has mixed results\n\u2022     Can mistakenly flag data written in dialects like African American\n      English\n---\n Reexamining \"Fair Use\" in the Age of\n AI There are problems with scraping from the web\n Generative Al claims to produce new language and images, but when those ideas are based on copyrighted\n material, who gets the credit? A new paper from Stanford University looks for answers.\n Jun 5, 2023 | Andrew Myersfin 0\n\n                                                                                                       Authors Sue OpenAI Claiming Mass Copyright\n                                                                                                       Infringement of Hundreds of Thousands of Novels\n\n The Times Sues OpenAI and Microsoft\nOver A.I. Use of Copyrighted Work\nMillions of articles from The New York Times were used to train\n chatbots that now compete with it, the lawsuit said.\n---\nThere are problems with scraping from the web\n\nCopyright: much of the text in these datasets is copyrighted\n\u2022     Not clear if fair use doctrine in US allows for this use\n\u2022     This remains an open legal question across the world\nData consent\n\u2022     Website owners can indicate they don't want their site crawled\nPrivacy:\n\u2022     Websites can contain private IP addresses and phone numbers\nSkew:\n\u2022     Training data is disproportionately generated by authors from the\n      US which probably skews resulting topics and opinions\n---\nLarge       Pretraining Large Language\nLanguage    Models\nModels\n---\nLarge       Evaluating Large Language\nLanguage    Models\nModels\n---\n   P(w ) = P(w )P(w |w )P(w |w  ) . . . P(w |w\n We\u2019ve been talking about predicting one word at a time, computing the proba\n       1:n    1  2  1  3  1:2               n  1:n\u2212\nof the next token w from the prior context: P(w |w ). But of course as we\n    Better        n\n              LMs are better at predicting text\n hapter 3 the     iY      i  <i\n                chain rule allows us to move between computing the probability\n next token and =       P(wi |w<i )\n                computing the probability of a whole text:\n    Reminder of the chain rule:\n       P(w         i=1\n                1:n ) = P(w1 )P(w2 |w1 )P(w3 |w1:2 ) . . . P(wn |w1:n\u22121 )\npute the probability of text just by multiplying the cond\n                        n\n ch                = Y P(wi |w<i )\n    token in the text. The resulting (log) likelihood of a\n                        i=1\n mparing how good two language models are on that text\ne can compute the probability of text just by multiplying the conditional pr\n        So given a text w1:n we could just compare the log likelihood from two LMs:\nities for each token in the text. The resulting (log) likelihood of a text is a us\n                                   n\n tric for comparing how good two language   Y\n        log likelihood(w          ) = models are on that text:\n                               1:n  log            P(wi |w<i )\n                                            n\n                  log likelihood(w  ) = log Y i=1\n                               1:n           P(wi |w<i )\n---\nBut raw log-likelihood has problems\n\nProbability depends on size of test set\n\u2022  Probability gets smaller the longer the text\n\u2022  We would prefer a metric that is per-word,\n   normalized by length\n---\nPerplexity is normalized for length\n\nPerplexity is the inverse probability of the test set,\nnormalized by the number of words\n (The inverse comes from the original definition of\n perplexity from cross-entropy rate in information theory)\n\n Probability range is [0,1], perplexity range is [1,\u221e]\n---\n          set), normalized by the test set length in tokens. For a test set of n toke\n    Perplexity\nAs we     perplexity is\n          first saw in Chapter 3, one way to evaluate language models is\n  well they predict unseen text. Intuitively, good models are those that\n                              Perplexity          (w ) =      P (w )\u2212 1\n    So just as for n-gram grammars, we use perplexity                 n\n                                                  1:n         to measure how\n robabilities to unseen data (are less     q                  q    1:n\n                                           surprised when encountering the\n    well the LM predicts unseen text                     = s       1\n    The perplexity of a model \u03b8 on an unseen test             n\ntiate this intuition by using perplexity to measure set is the inverse\n                                                           the quality of a\n    probability that \u03b8 assigns to the test set,                  Pq (w1:n )\n el. Recall from page   ?? that the perplexity of    normalized by the test\n    set length.                                      a model q on an unseen\n erse probability that  q assigns to the test set, normalized by the test\n          To visualize how perplexity can be computed as a function of the proba\na test  For a test set of n tokens w       the perplexity is :\n        set of  n tokens w  , the perplexity is\n          LM computes for each new word, we can use the chain rule to expand th\n                            1:n    1:n\n          tion of probability of the test set: \u2212 1\n                Perplexity (w1:n ) = P (w1:n ) n\n                           q          q                   v\n                                     s                    u n\n                                           1              uY          1\n                                   =                      t\n                                   Perplexity   (w  ) =\n                                        n  q       1:n    n      P (w(10.7)\n                                           P (w1:n )             q    i |w<i )\n                                           q                  i=1\n---\nPerplexity\n\n\u2022     The higher the probability of the word sequence, the lower\n      the perplexity.\n\u2022     Thus the lower the perplexity of a model on the data, the\n      better the model.\n\u2022     Minimizing perplexity is the same as maximizing\n      probability\n\nAlso: perplexity is sensitive to length/tokenization so best used\nwhen comparing LMs that use the same tokenizer.\n---\nMany other factors that we evaluate, like:\n\nSize\nBig models take lots of GPUs and time to train, memory to store\nEnergy usage\nCan measure kWh or kilograms of CO2 emitted\nFairness\nBenchmarks measure gendered and racial stereotypes, or decreased\nperformance for language from or about some groups.\n\n",
         "quiz": [
             {
-                "question_text": "What type of agents are large language models?",
+                "question_text": "What are computational agents that can interact conversationally with people using natural language called?",
                 "answers": [
                     {
-                        "text": "Computational agents that can interact conversationally with people using natural language",
+                        "text": "Large language models",
                         "is_correct": true,
-                        "explanation": "The concept description explicitly defines large language models as computational agents that can interact conversationally with people using natural language."
+                        "explanation": "The question asks for the term used to describe computational agents that can interact conversationally with people using natural language, which is directly described as 'Large language models' in the provided context."
                     },
                     {
-                        "text": "Simple n-gram language models",
+                        "text": "Computational agents",
                         "is_correct": false,
-                        "explanation": "Simple n-gram language models are mentioned as a different type of language model, not large language models."
+                        "explanation": "While computational agents are mentioned in the context, they are not the specific term used to describe agents that interact conversationally with people using natural language."
                     },
                     {
-                        "text": "Neural networks that generate images",
+                        "text": "Natural language processors",
                         "is_correct": false,
-                        "explanation": "The content context does not mention anything about generating images; it focuses on natural language interaction."
+                        "explanation": "The context does not mention 'Natural language processors' as a term used to describe computational agents that interact conversationally with people using natural language."
                     },
                     {
-                        "text": "Programs that translate code between programming languages",
+                        "text": "Neural networks",
                         "is_correct": false,
-                        "explanation": "The content context does not mention anything about translating code between programming languages; it focuses on natural language interaction."
+                        "explanation": "Neural networks are mentioned in the context but are not the specific term used to describe computational agents that interact conversationally with people using natural language."
                     }
                 ],
                 "topic": "Llms",
@@ -281,27 +249,27 @@
                 "explanation": ""
             },
             {
-                "question_text": "How do language models generate text?",
+                "question_text": "How do simple n-gram language models generate text?",
                 "answers": [
                     {
-                        "text": "By assigning probabilities to sequences of words and sampling possible next words",
+                        "text": "By sampling possible next words based on probabilities assigned to sequences of words",
                         "is_correct": true,
-                        "explanation": "The concept description states that language models generate text by assigning probabilities to sequences of words and sampling possible next words."
+                        "explanation": "Simple n-gram language models generate text by sampling possible next words based on probabilities assigned to sequences of words."
                     },
                     {
-                        "text": "By using a fixed set of predefined sentences",
+                        "text": "By predicting words from surrounding words on both sides",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention using a fixed set of predefined sentences for text generation."
+                        "explanation": "This describes the training method for masked language models (MLMs) like BERT, not simple n-gram models."
                     },
                     {
-                        "text": "By randomly selecting words from a dictionary",
+                        "text": "By learning to guess the next word through pretraining",
                         "is_correct": false,
-                        "explanation": "The concept description specifies that text generation involves sampling from a probability distribution over possible next words, not random selection from a dictionary."
+                        "explanation": "This describes the training method for large language models, not simple n-gram models."
                     },
                     {
-                        "text": "By copying text from a database of stored phrases",
+                        "text": "By assigning probabilities to sequences of words and generating text by sampling possible next words",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention copying text from a database; it focuses on generating text based on probabilities and sampling."
+                        "explanation": "This is a combination of the correct answer and a description of large language models, not simple n-gram models."
                     }
                 ],
                 "topic": "Llms",
@@ -313,27 +281,27 @@
                 "explanation": ""
             },
             {
-                "question_text": "What are large language models trained to do?",
+                "question_text": "What are large language models trained by learning to do?",
                 "answers": [
                     {
-                        "text": "Interact conversationally with people using natural language",
+                        "text": "Guess the next word",
                         "is_correct": true,
-                        "explanation": "The concept description explicitly states that large language models are computational agents that can interact conversationally with people using natural language."
+                        "explanation": "The concept description states that large language models are trained by learning to guess the next word."
                     },
                     {
-                        "text": "Perform complex mathematical calculations",
+                        "text": "Assign probabilities to sequences of words",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention that large language models are trained to perform complex mathematical calculations."
+                        "explanation": "While large language models do assign probabilities to sequences of words, this is not what they are specifically trained to do."
                     },
                     {
-                        "text": "Generate images based on textual descriptions",
+                        "text": "Generate text by sampling possible next words",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention that large language models are trained to generate images based on textual descriptions."
+                        "explanation": "Although large language models can generate text by sampling possible next words, this is not what they are trained to do."
                     },
                     {
-                        "text": "Control physical robots in real-time",
+                        "text": "Predict words from surrounding words on both sides",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention that large language models are trained to control physical robots in real-time."
+                        "explanation": "This describes the training method for masked language models (MLMs), not large language models."
                     }
                 ],
                 "topic": "Llms",
@@ -348,24 +316,24 @@
                 "question_text": "What is the fundamental intuition behind large language models?",
                 "answers": [
                     {
-                        "text": "Text contains enormous amounts of knowledge and pretraining on lots of text gives language models their ability to perform well",
+                        "text": "Text contains enormous amounts of knowledge and pretraining on lots of text with all that knowledge is what gives language models their ability to do so much",
                         "is_correct": true,
                         "explanation": "This is the fundamental intuition behind large language models as described in the content."
                     },
                     {
-                        "text": "Large language models are trained by learning to guess the next word in a sequence",
+                        "text": "Large language models are trained by learning to guess the next word",
                         "is_correct": false,
                         "explanation": "While this is a characteristic of large language models, it is not the fundamental intuition behind them."
                     },
                     {
-                        "text": "Large language models use a simple n-gram model to assign probabilities to sequences of words",
+                        "text": "Large language models assign probabilities to sequences of words",
                         "is_correct": false,
-                        "explanation": "Large language models are more advanced than simple n-gram models, as they use neural networks to assign probabilities."
+                        "explanation": "Although large language models do assign probabilities to sequences of words, this is not the fundamental intuition behind them."
                     },
                     {
-                        "text": "Large language models are primarily used for classification tasks",
+                        "text": "Large language models generate text by sampling possible next words",
                         "is_correct": false,
-                        "explanation": "Large language models are used for a variety of tasks, including text generation, not just classification."
+                        "explanation": "While this is a function of large language models, it is not the fundamental intuition behind them."
                     }
                 ],
                 "topic": "Llms",
@@ -377,27 +345,59 @@
                 "explanation": ""
             },
             {
-                "question_text": "What do large language models learn from pretraining?",
+                "question_text": "What does a model learn from pretraining?",
                 "answers": [
                     {
-                        "text": "Large language models learn to guess the next word in a sequence.",
+                        "text": "Text contains enormous amounts of knowledge",
                         "is_correct": true,
-                        "explanation": "The concept description states that large language models are trained by learning to guess the next word."
+                        "explanation": "The concept description explicitly states that text contains enormous amounts of knowledge, which is what the model learns from pretraining."
                     },
                     {
-                        "text": "Large language models learn to count the frequency of words in a text.",
+                        "text": "The model learns to generate random sequences of words",
                         "is_correct": false,
-                        "explanation": "The concept description mentions n-gram models that count word frequencies, but large language models learn to guess the next word, not just count frequencies."
+                        "explanation": "The model generates text by sampling possible next words based on learned probabilities, not randomly."
                     },
                     {
-                        "text": "Large language models learn to assign probabilities to individual words.",
+                        "text": "The model learns to assign probabilities to sequences of words",
                         "is_correct": false,
-                        "explanation": "The concept description specifies that large language models assign probabilities to sequences of words, not individual words."
+                        "explanation": "While the model does assign probabilities to sequences of words, this is a mechanism, not what it learns from pretraining."
                     },
                     {
-                        "text": "Large language models learn to generate text by sampling possible next words.",
+                        "text": "The model learns to predict the next word in a sentence",
                         "is_correct": false,
-                        "explanation": "While large language models do generate text by sampling possible next words, the question specifically asks what they learn from pretraining, which is to guess the next word."
+                        "explanation": "Predicting the next word is a training method, not the knowledge gained from pretraining."
+                    }
+                ],
+                "topic": "Llms",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Llms"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the input to a large language model?",
+                "answers": [
+                    {
+                        "text": "A context or prefix",
+                        "is_correct": true,
+                        "explanation": "The input to a large language model is described as a context or prefix, which the model uses to generate a distribution over possible next words."
+                    },
+                    {
+                        "text": "A sequence of tokens",
+                        "is_correct": false,
+                        "explanation": "While the input can be described as a sequence of tokens, the specific term used in the context is 'context or prefix.'"
+                    },
+                    {
+                        "text": "A probability distribution",
+                        "is_correct": false,
+                        "explanation": "The probability distribution is the output of the model, not the input."
+                    },
+                    {
+                        "text": "Natural language text",
+                        "is_correct": false,
+                        "explanation": "Natural language text is processed into a context or prefix, which serves as the input to the model."
                     }
                 ],
                 "topic": "Llms",
@@ -427,9 +427,9 @@
                         "explanation": "The concept description does not mention predefined rules; it focuses on probabilistic generation of text."
                     },
                     {
-                        "text": "A list of possible topics for discussion",
+                        "text": "A fixed set of possible sentences",
                         "is_correct": false,
-                        "explanation": "The concept description does not mention topics for discussion; it focuses on generating probabilities for next words."
+                        "explanation": "The concept description does not mention a fixed set of sentences; it focuses on generating probabilities for next words."
                     }
                 ],
                 "topic": "Llms",
@@ -451,15 +451,15 @@
                     {
                         "text": "Transformer, Recurrent Neural Network, Convolutional Neural Network",
                         "is_correct": false,
-                        "explanation": "These are different types of neural network architectures, not the specific architectures for large language models."
+                        "explanation": "These are types of neural network architectures, not the specific architectures for large language models."
                     },
                     {
                         "text": "Generative, Discriminative, Hybrid",
                         "is_correct": false,
-                        "explanation": "These terms describe types of models but are not the specific architectures mentioned for large language models."
+                        "explanation": "These are types of models, not the specific architectures for large language models."
                     },
                     {
-                        "text": "GPT, BERT, T5",
+                        "text": "BERT, GPT, Llama",
                         "is_correct": false,
                         "explanation": "These are examples of models that use the architectures, not the architectures themselves."
                     }
@@ -473,27 +473,123 @@
                 "explanation": ""
             },
             {
-                "question_text": "What are the three stages of training in large language models?",
+                "question_text": "What is the direction of token generation in decoder-based models?",
+                "answers": [
+                    {
+                        "text": "Left to right",
+                        "is_correct": true,
+                        "explanation": "The content explicitly states that decoder-based models generate tokens left to right in a causal, autoregressive manner."
+                    },
+                    {
+                        "text": "Right to left",
+                        "is_correct": false,
+                        "explanation": "The content does not mention any decoder-based models generating tokens from right to left."
+                    },
+                    {
+                        "text": "Bidirectional",
+                        "is_correct": false,
+                        "explanation": "Bidirectional generation is not mentioned in the context; it is associated with encoders, not decoders."
+                    },
+                    {
+                        "text": "Random order",
+                        "is_correct": false,
+                        "explanation": "The content specifies that tokens are generated iteratively one at a time, not in a random order."
+                    }
+                ],
+                "topic": "Llms",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Llms"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "How are encoder-based models trained?",
+                "answers": [
+                    {
+                        "text": "By learning to guess the next word",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that large language models are trained by learning to guess the next word."
+                    },
+                    {
+                        "text": "By assigning probabilities to sequences of words",
+                        "is_correct": false,
+                        "explanation": "While this is a feature of language models, it is not the method used for training as described in the concept."
+                    },
+                    {
+                        "text": "By generating text by sampling possible next words",
+                        "is_correct": false,
+                        "explanation": "This is a capability of language models but not the method used for training them."
+                    },
+                    {
+                        "text": "By counting words from lots of text",
+                        "is_correct": false,
+                        "explanation": "This describes the training method for simple n-gram models, not large language models."
+                    }
+                ],
+                "topic": "Llms",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Llms"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What are encoder-decoder models usually fine-tuned for?",
+                "answers": [
+                    {
+                        "text": "Machine translation",
+                        "is_correct": true,
+                        "explanation": "Encoder-decoder models are trained to map from one sequence to another, making them suitable for tasks like machine translation."
+                    },
+                    {
+                        "text": "Generating text from a single word",
+                        "is_correct": false,
+                        "explanation": "This is a function of decoder models, not encoder-decoder models."
+                    },
+                    {
+                        "text": "Predicting words from surrounding words",
+                        "is_correct": false,
+                        "explanation": "This is a function of encoder models, not encoder-decoder models."
+                    },
+                    {
+                        "text": "Classifying text sentiment",
+                        "is_correct": false,
+                        "explanation": "This is a function of encoder models, not encoder-decoder models."
+                    }
+                ],
+                "topic": "Llms",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Llms"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What are the three stages of training in LLMs?",
                 "answers": [
                     {
                         "text": "Pretraining, Instruction Tuning, Preference Alignment",
                         "is_correct": true,
-                        "explanation": "The three stages of training in large language models are explicitly listed as Pretraining, Instruction Tuning, and Preference Alignment in the provided content."
+                        "explanation": "The three stages of training in LLMs are explicitly listed as Pretraining, Instruction Tuning, and Preference Alignment in the provided content."
                     },
                     {
-                        "text": "Training, Testing, Deploying",
+                        "text": "Data Collection, Model Training, Evaluation",
                         "is_correct": false,
-                        "explanation": "These are general stages of model development but not specifically the stages of training in large language models as described in the content."
+                        "explanation": "These are general stages of machine learning but not specifically the three stages of training in LLMs as described in the content."
                     },
                     {
-                        "text": "Data Collection, Model Building, Evaluation",
+                        "text": "Tokenization, Embedding, Decoding",
                         "is_correct": false,
-                        "explanation": "These are general steps in creating a model but not the specific stages of training in large language models as outlined in the content."
+                        "explanation": "These are processes involved in NLP but not the three stages of training in LLMs as outlined in the content."
                     },
                     {
-                        "text": "Fine-tuning, Validation, Optimization",
+                        "text": "Fine-tuning, Testing, Deployment",
                         "is_correct": false,
-                        "explanation": "These are steps in model refinement but not the specific stages of training in large language models as described in the content."
+                        "explanation": "These are typical stages in model development but not the specific stages of training in LLMs as described in the content."
                     }
                 ],
                 "topic": "Llms",
@@ -505,6 +601,418 @@
                 "explanation": ""
             }
         ],
-        "summary": "The document \"LLMs.pdf\" introduces large language models (LLMs), which are computational agents that interact conversationally using natural language and have revolutionized NLP and AI. LLMs assign probabilities to word sequences, generate text by sampling next words, and are trained by learning to predict the next word in a sequence. The fundamental intuition is that pretraining on vast amounts of text imbues these models with extensive knowledge, enabling them to perform a wide range of tasks. The document also explains the architecture of LLMs, which typically involve a neural network that takes a context or prefix as input and outputs a distribution over possible next words, and discusses how these models can generate text by repeatedly sampling from this distribution."
+        "summary": "Purpose of the Document:\nThe document provides an introduction to large language models (LLMs), explaining their architecture, training processes, and evaluation methods. It covers the fundamentals of how LLMs generate text and the different types of models used in natural language processing.\n\nMain Ideas:\n\u2022 Introduction to large language models and their impact on NLP and AI\n\u2022 Comparison of traditional n-gram models and large language models\n\u2022 Explanation of pretraining and the knowledge it imparts to LLMs\n\u2022 Overview of different architectures for LLMs: decoders, encoders, and encoder-decoders\n\u2022 Detailed explanation of the training process, including pretraining, instruction tuning, and preference alignment\n\u2022 Discussion on the challenges and ethical considerations of training data, including copyright, privacy, and data consent\n\nKey Concepts:\n\u2022 Large language models\n\u2022 N-gram models\n\u2022 Pretraining\n\u2022 Decoders\n\u2022 Encoders\n\u2022 Encoder-decoders\n\u2022 Cross-entropy loss\n\u2022 Teacher forcing\n\u2022 Perplexity\n\u2022 Common Crawl\n\u2022 The Pile\n\u2022 Fair use\n\u2022 Copyright\n\u2022 Privacy\n\u2022 Data consent\n\nKey Takeaways:\n\u2022 Large language models are computational agents that can interact conversationally with people using natural language.\n\u2022 LLMs assign probabilities to sequences of words and generate text by sampling possible next words.\n\u2022 Pretraining on large amounts of text imparts extensive knowledge to LLMs.\n\u2022 There are three main architectures for LLMs: decoders, encoders, and encoder-decoders.\n\u2022 Training LLMs involves pretraining, instruction tuning, and preference alignment.\n\u2022 Training data for LLMs is primarily sourced from the web, with challenges related to copyright, privacy, and data consent.\n\u2022 Perplexity is a key metric for evaluating the performance of language models."
+    },
+    "data/raw/RNNs.pdf": {
+        "metadata": {
+            "file_name": "RNNs.pdf",
+            "file_type": "pdf",
+            "content_length": 33154,
+            "language": "en",
+            "extraction_timestamp": "2025-11-27T19:15:45.560773+00:00",
+            "timezone": "utc"
+        },
+        "content": "            Simple Recurrent Networks\nRNNs and    (RNNs or Elman Nets)\nLSTMs\n---\nModeling Time in Neural Networks\n\nLanguage is inherently temporal\nYet the simple NLP classifiers we've seen (for example for\nsen=ment analysis) mostly ignore =me\n\u2022     (Feedforward neural LMs (and the transformers we'll\n      see later) use a \"moving window\" approach to =me.)\nHere we introduce a deep learning architecture with a\ndifferent way of represen=ng =me\n\u2022     RNNs and their variants like LSTMs\n---\nRecurrent Neural Networks (RNNs)\n\nAny network that contains a cycle within its network\nconnec1ons.\nThe value of some unit is directly, or indirectly,\ndependent on its own earlier outputs as an input.\n---\nSimple Recurrent Nets (Elman nets)\n\ny\u209c\n\nh\u209c\n\nx\u209c\n\nThe hidden layer has a recurrence as part of its input\nThe ac1va1on value ht depends on xt but also ht-1!\n---\nForward inference in simple RNNs\n\nVery similar to the feedforward networks we've seen!\n---\n    h             h       = g(Uh      + Wx )             x\n         Simple recurrent neural network illustrated as a\n              t-1    t              t \u22121              t    t\n         feedforward network\n imple recurrent     yt   = f (Vht )         y\n                     neural network illustrated as \u1d57       a feedforwa\n from the prior time step is multiplied \u2c7d\ne input, hidden and output                   by weight matrix\n                                    layer dimensions as     d\n component from the current time step. h\u1d57\n iven this, our three                        +              d \u00d7\n                          parameter matrices are:          W \u2208 R h\n\u00d7dh .                     U                  W\n te y         via a softmax computation that gives a probabi\n         t           ht-1                    xt\n le output classes. ht              = g(Uht \u22121 + Wxt )\n\n                             y      = f (Vh )\n                             yt     = softmax(Vh )\n                               t    t        t\n---\ntime t \u2212 1 mandates an incremental inference algorithm that proceeds from the\nInference has to be incremental\nof the sequence to the end as illustrated in Fig. 8.3. The sequential nature of si\nrecurrent networks can also be seen by unrolling the network in time as is show\nFig. 8.4. In this figure, the various layers of units are copied for each time st\nComputing h at time t requires that we first computed h at the\nillustrate that they will have differing values over time. However, the various w\nprevious time step!\nmatrices are shared across time.\n\nfunction F ORWARD RNN(x, network) returns output sequence y\nh0 \u2190 0\nfor i \u2190 1 to L ENGTH (x) do\n hi \u2190 g(Uhi\u22121 + Wxi )\n yi \u2190 f (Vhi )\nreturn y\n\nFigure 8.3  Forward inference in a simple recurrent network. The matrices U, V and W\nshared across time, while new values for h and y are calculated with each time step.\n---\n   Training in simple RNNs\n                                                            yt\nJust like feedforward training:                             V\n\u2022  training set,      ht\n\u2022  a loss func<on,    +\n\u2022  backpropaga<on                  U                        W\n                                   ht-1                     xt\nWeights that need to be updated:\n\u2022  W, the weights from the input layer to the hidden layer,\n\u2022  U, the weights from the previous hidden layer to the current hidden layer,\n\u2022  V, the weights from the hidden layer to the output layer.\n---\n      Training in simple RNNs: unrolling in Ame\n\nUnlike feedforward networks:\n1. To compute loss func0on for the output\n at 0me t we need the hidden layer from          y3\n 0me t \u2212 1.                                      V\n2. hidden layer at 0me t influences the          y2    h3\n output at 0me t and hidden layer at 0me         V     U  W\n t+1 (and hence the output and loss at t+1).     y1    h2    x3\nSo: to measure error accruing to ht,             hV    U  W\n\u2022     need to know its influence on both the     1        x2\n      current output as well as the ones that    U  W\n      follow.                                    h0    x1\n---\n                                                y3\nUnrolling in Ame (2)                            y2    hV\n                                                         3\n                                                V     U  W\n                             y1                 h2       x3\n                             V          U       W\n                             h1                 x2\n                             U  W\n                             h0    x1\nWe unroll a recurrent network into a feedforward\ncomputa3onal graph elimina3ng recurrence\n1.  Given an input sequence,\n2.  Generate an unrolled feedforward network specific to input\n3.  Use graph to train weights directly via ordinary backprop (or\n    can do forward inference)\n---\n            Simple Recurrent Networks\nRNNs and    (RNNs or Elman Nets)\nLSTMs\n---\n        RNNs as Language Models\nRNNs and\nLSTMs\n---\ndels predict the next word in a sequence given some preceding\n    P(fish|Thanks for all the)\n    Reminder: Language Modeling\n ple, if the preceding context is  \u201cThanks for all the\u201d and we want\ngive us the ability to assign such a conditional probability to every\n y the next word is        \u201cfish\u201d we would compute:\n , giving us a distribution over the entire vocabulary. We can also\n    P(fish|Thanks for all the)\n s to entire sequences by combining these conditional probabilities\ns give us the ability to assign such a conditional probability to every\n                   n\n d, giving us a    Y\n       P( distribution over the entire vocabulary. We can also\n    w               ) =       P(w |w )\nies to entire sequences by combining these conditional probabilities\n                    1:n       i    <i\ne:                         i=1\n ge models of Chapter 3 compute the probability of a word given\n                             n\nence with the       n \u2212      Y\n      P(w                  1 prior words. The context is thus of size n \u2212 1.\n d                  1:n ) =   P(wi |w<i )\n       language models of Chapter 7, the context is the window size.\n                             i=1\n---\nThe size of the condi.oning context for different LMs\n\nThe n-gram LM:\nContext size is the n \u2212 1 prior words we condi3on on.\n\nThe feedforward LM:\nContext is the window size.\n\nThe RNN LM:\nNo fixed context size; ht-1 represents en3re history\n---\n  FFN LMs vs RNN LMs\n\na)  ^  ^ b)\nyt   a)  yt  b)\n^  ^\nU  U  yt  yt\n\nht  ht  V  V\n\nht-2  U  h h  U U h h  U  h\nt-1 t-2  t  t-1  t\nW  W\n\ne   e  e  eW  \u2026 e\u1d42 W  W W  W\nt-2  t-1  t e  e   e t-2  e  e  e  e\nt-2  t-1  t  t-1 t-2  t  t-1  t\n\nFFN  RNN\n---\n es it by the weight matrix W, and then adds it to the hidd\nnference in an RNN language model\n    Forward inference in the RNN LM\ntep (weighted by weight matrix  U) to compute a new\n yer is then used to generate an output layer which is pass\nn a recurrent language model proceeds exactly as des\n    Given input X of of N tokens represented as one-hot vectors\n to generate a probability distribution over the entire voca\nnput sequence X = [x1 ; ...; xt ; ...; xN ] consists of a serie\na one-hot vector of size    |V | \u00d7 1, and the output predict\n    Use embedding matrix to get the embedding for current token xt\n a probability distribution over the vocabulary. At each\n embedding    et      = Ext\n    Combine \u2026 matrix  E to retrieve the embedding for t\n the          ht      = g(Uht \u22121 + Wet )\n    weight matrix     W , and then adds it to the hidden\n              \u02c6\n              yt      = softmax(Vht )\neighted by weight matrix    U) to compute a new hid\n hen used to generate an output layer which is passed th\n---\nb)\nShapes    ^\n          yt  |V| x 1\n\nV  |V| x d\nd x d\nh  d x 1  h  U  h  d x 1\n   t-2  U  t-1     t\n\nW          W      W  d x d\n\net-2       et-1    et  d x 1\n---\n t a particular word k in the vocabulary is the next word\nility of an entire sequence is just the product of the prob\n th component of \u02c6\n    y :\n        Compu.ng the probability that the next word is word k\n quence, where we\u2019ll use  \u02c6\n    t                       yi [wi ] to mean the probability\nep  i.    P(w        = k|w , . . . , w ) = \u02c6\n          t +1            1      t         yt [k]\n                          n\n y of an entire sequence  Y\n               P(w         is just the product of the probab\n ence, where we\u2019ll   1:n ) =     P(wi |w1:i\u22121 )\n                  use      \u02c6\n                           yi [wi ] to mean the probability o\n                              i=1\n  i.                          n\n                           = Y \u02c6\n   n                             yi [wi ]\n   Y\n          P(w        ) =      i=1\n               1:n            P(wi |w1:i\u22121 )\n---\nTraining RNN LM\n\n\u2022  Self-supervision\n    \u2022  take a corpus of text as training material\n    \u2022  at each time step t\n    \u2022  ask the model to predict the next word.\n\u2022  Why called self-supervised: we don't need human labels;\n   the text is its own supervision signal\n\u2022  We train the model to\n    \u2022  minimize the error\n    \u2022  in predicting the true next word in the training sequence,\n    \u2022  using cross-entropy as the loss function.\n---\n            correct distribution.\nFigure 8.6  Training RNNs as language models.  X\n       Cross-entropy loss             L      = \u2212  y [w] log \u02c6\n                                      CE          t    yt [w]\n                    correct distribution.         w\u2208V\n  The difference between:                              X\n            In the case of language modeling, the correct distribution y \u02c6 com\n                                             L    = \u2212   y [w] log y [w]\n  \u2022     a predicted probability distribu3on  CE         t                                  t t\n            next word. This is represented as a one-hot vector correspondi\n  \u2022     the correct distribu3on.                       w\u2208V\n            where the entry for the actual next word is 1, and all the other\n  CE loss for LMs is simpler!!!\n            the     In the case of language modeling, the correct distribution\n                    cross-entropy loss for language modeling is determined b\n  \u2022    the correct  next word. This is represented as a one-hot vector corres\n            model distribu<on y is a one-hot vector over the vocabulary\n                                     assigns to the correct next word. So at time t the CE los\n       \u2022                       t\n            where the entry for the actual next word is 1, and all the other entries are 0.\n                    where the entry for the actual next word is 1, and all the\n  \u2022                          probability the model assigns to the next word in the training se\n       So the CE loss for LMs is only determined by the probability of next word.\n                    the cross-entropy loss for language modeling is determi\n  \u2022    So at <me t, CE loss is:\n                    model assigns to the correct next word. So at time t the\n                                      L      \u02c6         \u02c6\n                    probability the          CE (yt , yt ) = \u2212 log yt [wt +1 ]\n                                      model assigns to the next word in the trai\n---\nTeacher forcing\n\nWe always give the model the correct history to predict the next word (rather\nthan feeding the model the possible buggy guess from the prior :me step).\nThis is called teacher forcing (in training we force the context to be correct based\non the gold words)\nWhat teacher forcing looks like:\n\u2022  At word posi:on t\n\u2022  the model takes as input the correct word wt together with ht\u22121, computes a\n   probability distribu:on over possible next words\n\u2022  That gives loss for the next token wt+1\n\u2022  Then we move on to next word, ignore what the model predicted for the next\n   word and instead use the correct word wt+1 along with the prior history\n   encoded to es:mate the probability of token wt+2.\n---\n er of the network through the calculation of     Vh. V is of shape [|V | \u00d7\nthe rows of  V are shaped like a transpose of E, meaning that V provi\n et  Weight tying\n     of learned word embeddings.\n d of having two sets of embedding matrices, language models use a sin\n g   The input embedding matrix E and the final layer matrix V, are similar\n     matrix, which appears at both the input and softmax layers.             Tha\n     \u2022  The columns of E represent the word embeddings for each word in\n se with V and use E at the start of the computation and E| (because\nV is the vocab. E is [d x |V|]\n     \u2022   transpose of E at the end. Using the same matrix (transposed\n         The final layer matrix V helps give a score (logit) for each word in\ns is called weight tying.1 The weight-tied equations for an RNN langu\n         vocab . V is [|V| x d ]\n n become:\n     Instead of having separate E and V, we just <e them together, using E\u1d40\n     instead of V:\n                     et     = Ext                                            (8\n                     ht     = g(Uht \u22121 + Wet )                               (8\n                  \u02c6                  |\n                     yt     = softmax(E ht )                                 (8\n---\n        RNNs as Language Models\nRNNs and\nLSTMs\n---\n        RNNs for Sequences\nRNNs and\nLSTMs\n---\nRNNs for sequence labeling\n\nAssign a label to each element of a sequence\nPart-of-speech tagging\n\nArgmax  NNP           MD  VB  DT            NN\n        y\nSoftmax over\n    tags\n        Vh\n  RNN                 h\nLayer(s)\n\nEmbeddings  e\n\nWords       Janet      will  back  the      bill\n---\nFFN\nRNNs for sequence classificaAon    hn\n\nText classification                                        RNN\n\n                                        Softmax\n\n                       x    x           FFN\n                       1                2       x3                      xn\n                                                hn\n\nFigure 8.8                  Sequence classification using a simple RNN combined with a feedfo\nwork.                                        RNN\n                       The final hidden state from the RNN is used as the input to a feedforward ne\nperforms the classification.\n                       x1    x2    x3           xn\n\npools all the n hidden states by taking their element-wise mean:\nInstead of taking the last state, could use some pooling function of all\nthe output states, like mean pooling                  n\n                                             hmean = 1 X hi\n                                                n i=1\n---\nAutoregressive generation\n\nSampled Word  So  long  and  ?\n\nSoftmax\n\nRNN\n\nEmbedding\n\nInput Word    <s>  So   long  and\n---\nStacked RNNs\n\ny1    y2    y3    yn\n\nRNN 3\n\nRNN 2\n\nRNN 1\n\nx1    x2    x3    xn\n---\n \u2022  S TACKED AND B IDIRECTIONAL RNN ARCHITECTURES                   13\n  o separate RNNs, one left-to-right, and one right-to-left, and\n             h f  = RNN       (x , . . . , x )                  (8.16)\n             BidirecAonal RNNs\nrepresentations.         forward  1          t\n tate   hb   t\n             t represents all the information we have discerned about the\n ight RNNs we\u2019ve discussed so far, the hidden state at a given time\n to the end of the sequence.\nn   h f simply corresponds to the normal hidden state at time t , repre-\nything the network knows about the sequence up to that point. The\n nal t\nng     RNN (Schuster and Paliwal, 1997) combines two independent\n f  the network has gleaned from the sequence so far.\n    the inputs    x1 , ..., xt and represents the context of the network to\ne the input is processed from the start to the end, and the other from\nntage of context to the right of the current input, we can train an\n nt time.                                            y          y          y          y\n. We then concatenate the two representations computed by the\nrsed input sequence. With                            1              2      3          n\n                               this approach, the hidden state at time t\nngle vector that captures both the left and right contexts of an input    concatenated\n               h f  = RNN      (x , . . . , x )\n  ation about the sequence to the    right tof the current input:  (8.16)\n e. Here we t                  forward  1                                   outputs\n                use either the semicolon \u201d;\u201d or the equivalent symbol\n    f           b\n concatenation:\n    h          h    = RNN               (x , . . . x )\n         simply corresponds to the normal hidden state at time t , repre-\n       t            t          backward      t       n             (8.17)             RNN 2\n g the network has gleaned from the sequence so far.\n tage of context to the right of the current input, we can train an\n                         ht = [h f ; hb ]                                       RNN 1\n sed input sequence. With t              t\n                               this approach, the hidden state at time t\n                            = h f \u2295 hb                             (8.18)\n ation about the sequence to the             right of the current input:\n                               t         t\n\n               hb        = RNN          (x , . . . x )    x1              x2    x3         xn\n ates           t              backward      t       n                  (8.17)\n            such a bidirectional network that concatenates the outputs of\nackward pass.            Other simple ways to combine the forward and\n ts include element-wise addition or multiplication. The output at\nhus captures information to the left and to the right of the current\ne labeling applications, these concatenated outputs can serve as the\n---\nBidirecAonal RNNs for classificaAon\n\nSoftmax\n\nFFN\n\n\u2190  \u2192\nh1     hn\n\n\u2190    RNN 2\nh1\n\nRNN 1  \u2192\n       hn\n\nx1    x2    x3    xn\n---\n        RNNs for Sequences\nRNNs and\nLSTMs\n---\n        The LSTM\nRNNs and\nLSTMs\n---\nMoAvaAng the LSTM: dealing with distance\n\n\u2022   It's hard to assign probabili<es accurately when context is very far away:\n    \u2022 The flights the airline was canceling were full.\n\u2022   Hidden layers are being forced to do two things:\n    \u2022  Provide informa<on useful for the current decision,\n    \u2022  Update and carry forward informa<on required for future decisions.\n\u2022  Another problem: During backprop, we have to repeatedly mul<ply\n   gradients through <me and many h's\n    \u2022 The \"vanishing gradient\" problem\n---\nThe LSTM: Long short-term memory network\n\nLSTMs divide the context management problem into two\nsubproblems:\n\u2022     removing informa<on no longer needed from the context,\n\u2022     adding informa<on likely to be needed for later decision making\n\u2022     LSTMs add:\n     \u2022  explicit context layer\n     \u2022  Neural circuits with gates to control informa0on flow\n---\nontext vector to remove the information from context that is no longer re-\n   Forget gate\nElement-wise multiplication of two vectors (represented by the operator \u2299\netimes called the Hadamard product) is the vector of the same dimensio\no input vectors, where each element        i is the product of element i in the tw\n   Deletes information from the context that is no longer needed.\nctors:\n\n                    ft     = s (U f ht \u22121 + W f xt )             (8.20\n                    kt     = ct \u22121 \u2299 ft                          (8.21\n\nt task is to compute the actual information we need to extract from the previ-\nden state and current inputs\u2014the same basic computation we\u2019ve been using\nur recurrent networks.\n\n                  gt      = tanh(Ug ht \u22121 + Wg xt )              (8.22\n---\n te the actual information we need to ex\n    Regular passing of information\nrent inputs\u2014the same basic computati\n orks.\n\n    gt = tanh(Ug ht \u22121 + Wg xt )\n\nask for the  add gate to select the in\n---\n    Add   gt      = tanh(Ug ht \u22121 + Wg xt )                                   (8\n          gate\n erate the mask for the  add gate to select the information to add to\next.    it  = s (Ui ht \u22121 + Wi xt )\n        Selec:ng informa:on to add to current context\n        jt  = i gt \u2299 it\n             t       = s (Ui ht \u22121 + Wi xt )                                  (8\n\n  odified   jt       = gt \u2299 it                                                (8\n          context vector to get our new context vect\n this to the modified context vector to get our new context vector.\n        Add this to the modified context vector to get our new context vector.\n              c      = j + k\n                  t      c = j + k\n                         t t  t   t t                                         (8\n---\nuse is the  output gate which is used to decide\n    Output gate\nurrent hidden state (as opposed to what informa\nre  Decide what informa6on is required for the current hidden state (as opposed to what informa6on needs to\n    decisions).\n    be preserved for future decisions).\n\n    ot      = s (Uo ht \u22121 + Wo xt )\n    ht      = ot \u2299 tanh(ct )\n\nhe complete computation for a single LSTM un\nr the various gates, an LSTM accepts as input\n---\nThe LSTM\n\nct-1  ct-1\n\nht-1  ht-1\n\nxt  xt\n\n+  +  +  +\n\nf\n\u03c3\n\ntanh  g\n\n i\n\u03c3\n\n o\n\u03c3\n\n\u29bf    \u29bf\n\n     +\n\nct    ct\n\ntanh\n\n    \u29bf ht  ht\n\nLSTM\n---\nUnits\n\n          h    ht    ct    ht\n\n     a         a\n\n          g     g\n\n     z         z           LSTM\n                           Unit\n          \u2303         \u2303\n\nx    ht-1    xt    ct-1  ht-1  xt\n\n(a)          (b)         (c)\n\nFFN          SRN         LSTM\n---\n        The LSTM\nRNNs and\nLSTMs\n---\n            The LSTM Encoder-Decoder\nRNNs and    Architecture\nLSTMs\n---\nFour architectures for NLP tasks with RNNs\n\ny\ny1  y2    \u2026  yn\n\nRNN    RNN\n\nx1  x2    \u2026  xn    x1  x2    \u2026  xn\n\n    a) sequence labeling    b) sequence classification\n\n    y1  y2  \u2026  ym\n\nx2  x3    \u2026  xt    Decoder RNN\n\n                   Context\n          RNN\n                   Encoder RNN\n\nx1  x2       \u2026  xt-1    x1  x2  \u2026  xn\n\n    c) language modeling        d) encoder-decoder\n---\n 3 components of an encoder-decoder\n\n1. An encoder that accepts an input sequence, x1:n, and\n generates a corresponding sequence of contextualized\n representa3ons, h1:n.\n2. A context vector, c, which is a func3on of h1:n, and\n conveys the essence of the input to the decoder.\n3. A decoder, which accepts c as input and generates an\n arbitrary length sequence of hidden states h1:m, from which\n a corresponding sequence of output states y1:m, can be\n obtained\n---\nEncoder-decoder\n\ny1  y2    \u2026  ym\n\n          Decoder\n\nContext\n\nEncoder\n\nx1  x2    \u2026  xn\n---\n   g is an activation function like tanh or ReLU\ns, but we\u2019ll see in Chapter 13 how to apply them to transformers as well. We\nand the hidden state at time t \u2212 1, and the soft\nd   Encoder-decoder for translaAon\n up the equations for encoder-decoder models by starting with the condition\n lary items, then at time  t the output y and hid\nlanguage model p(y), the probability of a sequence y.    t\nRecall that in any language model, we can break down the probability as follow\n    Regular language modeling\n    p(y) =     p(y1 ) p(y2 |y1 ) p(y3 |y1 , y2 ) . . . p(ym |y1 , ..., ym\u22121 )    (8.2\nIn             h = g(h       , x )\n       RNN language modeling, at a particular time t , we pass the prefix of t \u2212\nns through the   t           t \u22121  t\n                 language model, using forward inference to produce a sequen\n                 \u02c6\n                 y    = softmax(h )\ndden states, ending with the hidden state corresponding to the last word o\nrefix. We then use   t              t\n                 the final hidden state of the prefix as our starting point t\nrate the next token.\n ake one slight change to turn this language mo\nMore formally, if g is an activation function like tanh or ReLU, a function\nnput at time t   and the hidden state at time t \u2212 1, and the softmax is over th\nion into an encoder-decoder model that is a tra\nf possible vocabulary items, then at time t the output yt and hidden state ht a\n---\nd a sentence separation marker at the end of the source text, and then sim\nncatenate the target text.\n    Encoder-decoder for translaAon\n  Let\u2019s use <s> for our sentence separator token, and let\u2019s think about transla\nEnglish source text (\u201cthe green witch arrived\u201d), to a Spanish sentence (\u201c l\n    Let x be the source text plus a separate token <s> and\nbruja verde \u201d (which can be glossed word-by-word as \u2018arrived the witch gre\n    y the target\ne could also illustrate encoder-decoder models with a question-answer pair,\n    Let x = The green witch arrive <s>\nxt-summarization pair.\n  Let\u2019s use x to refer to the source text (in this case in English) plus the separ\nken Let y = llego la bruja verde\n    <s>, and y to refer to the target text y (in this case in Spanish). The\ncoder-decoder model computes the probability p(y|x) as follows:\n    p(y|x) = p(y1 |x) p(y2 |y1 , x) p(y3 |y1 , y2 , x) . . . p(ym |y1 , ..., ym\u22121 , x)  (\n  Fig. 8.17 shows the setup for a simplified version of the encoder-decoder m\ne\u2019ll see the full model, which requires the new concept of attention, in the\n---\n    Encoder-decoder simplified\n\n    Target Text\n\n               lleg\u00f3  la  bruja  verde  </s>\n\n    softmax    (output of source is ignored)\n\n hidden                                     h\u2099\nlayer(s)\n\nembedding\n  layer\n               the  green  witch            arrived  <s>  lleg\u00f3  la    bruja  verde\n\n                    Source Text                      Separator\n---\n meter to the computation of the current hidden sta\n    Encoder-decoder showing context\n\n    hd = g(y  d\n    t    \u02c6t \u22121 , ht \u22121 , c)\n\n                           Decoder\n\n    y1  y2  y3    y4  </s>\n    (output is ignored during encoding)\n    softmax\n\n hidden  h\u1d49    h\u1d49    h\u1d49    h\u1d49 = c = h\u1d48    h\u1d48    h\u1d48    h\u1d48    h\u1d48    h\u1d48\nlayer(s)       1    2      3    h\u2099 n    0    1    2    3    4     m\n\nembedding\n  layer\n    x1              x2   x3     xn           <s>  y1   y2    y3   ym\n\n    Encoder\n---\n                     er-decoder model, with context available at each decoding timestep. Recal\n is a stand-in for some flavor of RNN and\n                                            y\n                                                          \u02c6t \u22121 is the embedding for the outpu\n ed   Encoder-decoder equaAons\n      from the softmax at the previous step:\n\n      c                    = he\n                                            n\n                       hd  = c\n                        0\n                        d  = g(y             d\n      ht                                     \u02c6t \u22121 , ht \u22121 , c)\n      \u02c6                                       d\n      yt                   = softmax(ht )                                                     (8.33)\n\n\u02c6\ny  is a vector of probabilities over the vocabulary, representing the probability\n t    g is a stand-in for some flavor of RNN\nh word occurring at time t . To generate text, we sample from this distribution\n      y\u02c6t\u22121 is the embedding for the output sampled from the so9max at the previous step\n example, the greedy choice is simply to choose the most probable word to\n      \u02c6yt is a vector of probabili=es over the vocabulary, represen=ng the probability of each\nate   word occurring at =me t. To generate text, we sample from this distribu=on \u02c6yt .\n      at each timestep. We\u2019ll introduce more sophisticated sampling methods in\n n ??.\n---\n    Training the encoder-decoder with teacher forcing\n\n    Decoder\n\n    lleg\u00f3                                    la          bruja  verde  </s>                  gold\n                                                                                             answers\n    y\u2081                                       y\u2082          y\u2083     y\u2084     y\u2085\n\n    Total loss is the average    L\u2081 =    L\u2082 =            L\u2083 =    L\u2084 =    L\u2085 =                per-word\ncross-entropy loss per           -log P(y\u2081)  -log P(y\u2082)  -log P(y\u2083)  -log P(y\u2084)  -log P(y\u2085)  loss\n     target word:\n\n                                                                                             softmax\n\n hidden\nlayer(s)\n\n    embedding\n    layer\n   x\u2081      x\u2082       x\u2083    x\u2084\n  the    green    witch  arrived  <s>  lleg\u00f3  la  bruja  verde\n\n    Encoder\n---\n            The LSTM Encoder-Decoder\nRNNs and    Architecture\nLSTMs\n---\n        LSTM ABenCon\nRNNs and\nLSTMs\n---\nProblem with passing context c only from end\n\nRequiring the context c to be only the encoder\u2019s final hidden state\nforces all the informa<on from the en<re source sentence to pass\nthrough this representa<onal bo_leneck.\n\nEncoder    bottleneck                  Decoder\n           bottleneck\n---\nSoluAon: aRenAon\n In the attention mechanism, as in the vanilla enco\n vector c is a single vector that is a function of the hi\ninstead of being taken from the last hidden state, the context it\u2019s a\nweighted average of all the hidden states of the decoder.\n instead of being taken from the last hidden state, it\u2019\nthis weighted average is also informed by part of the decoder state as\n hidden states of the decoder. And this weighted ave\nwell, the state of the decoder right before the current token i.\n the decoder state as well, the state of the decoder r\n That is, c = f (he . . . he , hd              ). The weights focus on\n the source text  1  n  i\u22121\n                             that is relevant for the token i that the\n Attention thus replaces the static context vector with\n from the encoder hidden states, but also informed b\n token in decoding.\n---\ng decoding by conditioning the computation of the\nit (along with the prior hidden state and the previous\n   ARenAon\ner), as we see in this equation (and Fig.  8.21):\n\n   hd = g(y  d\n   i      \u02c6i\u22121 , hi\u22121 , ci )\n\n          y\u2081  y\u2082    yi\n   y\u2081     h\u1d48\u2081 y2  h\u1d48\u2082  \u2026 h\u1d48yi  i  \u2026\n\n   h\u1d48\u2081    c\u2081 hd2  c\u2082   \u2026 chi   di  \u2026\n---\n h encoder state j.    i\u22121  j\n core that results from this dot product is a scalar that reflects the degree\nhe   How to compute c?\n     simplest such score, called dot-product attention, implements relevance as\nlarity between the two vectors. The vector of these scores across all the enc\n rity: measuring how similar the decoder hidden state is to an encoder hidden\n en states gives us the relevance of each encoder state to the current step of\nby   We'll create a score that tells us how much to focus on each encoder\n     computing the dot product between them:\n der.  state, how relevant each encoder state is to the decoder state:\n o make use of these scores, we\u2019ll normalize them with a softmax to crea\n                       score(hd , he ) = hd  \u00b7 he                        (8.35)\nor of weights, a       i\u22121      j        i\u22121   j\n                    i j , that tells us the proportional relevance of each encoder hid\n  j to the prior hidden decoder state, hd  .\n ore that results from this dot product is a scalar that reflects the degree of\n       We\u2019ll normalize them with a so`max to create weights \u03b1 , that tell us\n rity between the two vectors.       i\u22121                      i j\n       the                         The vector of these scores across all the encoder\n               relevance of encoder hidden state j to hidden decoder state, h\u1d48i-1\nn states               a = softmax(score(hd          , he ))\n     \u2022  gives us the relevance of each encoder state to the current step of the\n        RNN         LSTM\n               S AND     i j                   i\u22121   j\n er.                     S         exp(score(hd , he )\n        And then use this to help create      i\u22121    j\no make use of these scores, we\u2019ll            a weighted average:\ntates.                          = P normalize them with a softmax to create a(8\nr of weights, a                     exp(score(hd     , he ))\n                   , that tells us the proportional relevance of each encoder hidden\n               i j                 c k  X    e  i\u22121   k\nj to the                             = d     a h                                 (8.37)\n             prior hidden decoder state, h   .\n lly, given the distribution in a i     i\u22121    i j  j\n                                   , we can compute a fixed-length context vecto\n                                             j\n---\nEncoder-decoder with a<en=on, focusing on the\ncomputa=on of c\n\nDecoder\n\nX<latexitsha1_base64=\"TNdNmv/RIlrhPa6LgQyjjQLqyBA=\">AAACAnicdVDLSsNAFJ3UV62vqCtxM1gEVyHpI9Vd0Y3LCvYBTQyT6bSddvJgZiKUUNz4K25cKOLWr3Dn3zhpK6jogQuHc+7l3nv8mFEhTfNDyy0tr6yu5dcLG5tb2zv67l5LRAnHpIkjFvGOjwRhNCRNSSUjnZgTFPiMtP3xRea3bwkXNAqv5SQmboAGIe1TjKSSPP3AEUngjVIHsXiIvJSOpnB4Q7zR1NOLpmGaVbtqQdOwLbtk24qY5Yp9VoOWsjIUwQINT393ehFOAhJKzJAQXcuMpZsiLilmZFpwEkFihMdoQLqKhiggwk1nL0zhsVJ6sB9xVaGEM/X7RIoCISaBrzoDJIfit5eJf3ndRPZP3ZSGcSJJiOeL+gmDMoJZHrBHOcGSTRRBmFN1K8RDxBGWKrWCCuHrU/g/aZUMyzbKV5Vi/XwRRx4cgiNwAixQA3VwCRqgCTC4Aw/gCTxr99qj9qK9zltz2mJmH/yA9vYJSymYCA==</latexit>  \u21b5ij h\u1d49  ci\n\nj  j  yi-1  yi\nattention  .4  .3  .1  .2\nweights\n\u21b5ij  h<latexitsha1_base64=\"y8s4mGdpwrGrBnuSR+p1gJJXYdo=\">AAAB/nicdVDJSgNBEO2JW4zbqHjy0hgEL4YeJyQBL0EvHiOYBbIMPT09mTY9C909QhgC/ooXD4p49Tu8+Td2FkFFHxQ83quiqp6bcCYVQh9Gbml5ZXUtv17Y2Nza3jF391oyTgWhTRLzWHRcLClnEW0qpjjtJILi0OW07Y4up377jgrJ4uhGjRPaD/EwYj4jWGnJMQ+Cgedk7NSa9IgXq955MKDOrWMWUQnNAFGpYtfsakUTZNtWGUFrYRXBAg3HfO95MUlDGinCsZRdCyWqn2GhGOF0UuilkiaYjPCQdjWNcEhlP5udP4HHWvGgHwtdkYIz9ftEhkMpx6GrO0OsAvnbm4p/ed1U+bV+xqIkVTQi80V+yqGK4TQL6DFBieJjTTARTN8KSYAFJkonVtAhfH0K/yets5JVKdnX5WL9YhFHHhyCI3ACLFAFdXAFGqAJCMjAA3gCz8a98Wi8GK/z1pyxmNkHP2C8fQICDpWK</latexit>  d  \u00b7 h\u1d49\ni\u22121  j\n\nhidden  h\u1d49\u2081  h\u1d49\u2082  h\u1d49\u2083  h\u1d49\u2099  \u2026  ci-1  h\u1d48i-1  h\u1d48i  \u2026\nlayer(s)\n\nx\u2081  x\u2082  x\u2083  x\u2099  yi-2  ci  yi-1\n\n  Encoder\n---\n        LSTM ABenCon\nRNNs and\nLSTMs\n\n",
+        "quiz": [
+            {
+                "question_text": "What is the primary characteristic of Recurrent Neural Networks (RNNs)?",
+                "answers": [
+                    {
+                        "text": "They contain cycles within their network connections.",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that RNNs are networks that contain a cycle within their network connections."
+                    },
+                    {
+                        "text": "They use a moving window approach to time.",
+                        "is_correct": false,
+                        "explanation": "The content context mentions that feedforward neural networks use a moving window approach, not RNNs."
+                    },
+                    {
+                        "text": "They are primarily used for image recognition.",
+                        "is_correct": false,
+                        "explanation": "The content context does not mention image recognition as a primary use of RNNs; it focuses on temporal data like language."
+                    },
+                    {
+                        "text": "They do not have any hidden layers.",
+                        "is_correct": false,
+                        "explanation": "The concept description and content context describe the hidden layer and its recurrence, indicating that RNNs do have hidden layers."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the purpose of the hidden layer in a simple recurrent network?",
+                "answers": [
+                    {
+                        "text": "To provide a recurrence as part of the hidden layer's input, making the activation value depend on both the current input and the previous hidden state",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that the hidden layer in a simple recurrent network has a recurrence as part of its input, making the activation value depend on both the current input and the previous hidden state."
+                    },
+                    {
+                        "text": "To increase the number of layers in the network",
+                        "is_correct": false,
+                        "explanation": "The concept description does not mention increasing the number of layers as a purpose of the hidden layer in a simple recurrent network."
+                    },
+                    {
+                        "text": "To eliminate the need for a softmax computation in the output layer",
+                        "is_correct": false,
+                        "explanation": "The concept description does not mention eliminating the need for a softmax computation as a purpose of the hidden layer in a simple recurrent network."
+                    },
+                    {
+                        "text": "To share weights across different time steps in the network",
+                        "is_correct": false,
+                        "explanation": "While weight sharing across time steps is a characteristic of RNNs, it is not the primary purpose of the hidden layer as described in the concept."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the function of the weight matrix U in a simple recurrent network?",
+                "answers": [
+                    {
+                        "text": "It transforms the previous hidden state (h\u209c\u208b\u2081) to contribute to the current hidden state (h\u209c).",
+                        "is_correct": true,
+                        "explanation": "The weight matrix U in a simple recurrent network is responsible for transforming the previous hidden state (h\u209c\u208b\u2081) to contribute to the current hidden state (h\u209c)."
+                    },
+                    {
+                        "text": "It connects the input layer directly to the output layer.",
+                        "is_correct": false,
+                        "explanation": "The weight matrix U does not connect the input layer to the output layer; this function is performed by the weight matrix V."
+                    },
+                    {
+                        "text": "It initializes the hidden state to zero at the start of the sequence.",
+                        "is_correct": false,
+                        "explanation": "The initialization of the hidden state to zero is part of the forward inference process, not the function of the weight matrix U."
+                    },
+                    {
+                        "text": "It calculates the final output probabilities via a softmax function.",
+                        "is_correct": false,
+                        "explanation": "The calculation of the final output probabilities via a softmax function is performed by the weight matrix V, not U."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the function of the weight matrix W in a simple recurrent network?",
+                "answers": [
+                    {
+                        "text": "It multiplies the input from the current time step.",
+                        "is_correct": true,
+                        "explanation": "The weight matrix W in a simple recurrent network multiplies the input component from the current time step, as described in the content context."
+                    },
+                    {
+                        "text": "It connects the output layer to the hidden layer.",
+                        "is_correct": false,
+                        "explanation": "The weight matrix V connects the hidden layer to the output layer, not W."
+                    },
+                    {
+                        "text": "It links the hidden layer from the previous time step to the current hidden layer.",
+                        "is_correct": false,
+                        "explanation": "The weight matrix U links the hidden layer from the previous time step to the current hidden layer, not W."
+                    },
+                    {
+                        "text": "It determines the activation function for the hidden layer.",
+                        "is_correct": false,
+                        "explanation": "The activation function for the hidden layer is determined by g(Uh_{t-1} + Wx_t), not solely by W."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the function of the weight matrix V in a simple recurrent network?",
+                "answers": [
+                    {
+                        "text": "To transform the hidden layer activations into output probabilities",
+                        "is_correct": true,
+                        "explanation": "The weight matrix V in a simple recurrent network is used to transform the hidden layer activations (h\u1d57) into output probabilities (y\u1d57) via a softmax computation."
+                    },
+                    {
+                        "text": "To connect the input layer to the hidden layer",
+                        "is_correct": false,
+                        "explanation": "The weight matrix W connects the input layer to the hidden layer, not V."
+                    },
+                    {
+                        "text": "To connect the hidden layer to itself across time steps",
+                        "is_correct": false,
+                        "explanation": "The weight matrix U connects the hidden layer to itself across time steps, not V."
+                    },
+                    {
+                        "text": "To initialize the hidden layer activations",
+                        "is_correct": false,
+                        "explanation": "The hidden layer activations are initialized to zero (h\u2080 \u2190 0), not by the weight matrix V."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the hidden layer activation function in a simple recurrent network?",
+                "answers": [
+                    {
+                        "text": "The hidden layer activation function is g(Uh\u209c\u208b\u2081 + Wx\u209c)",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that the hidden layer activation function in a simple recurrent network is g(Uh\u209c\u208b\u2081 + Wx\u209c)."
+                    },
+                    {
+                        "text": "The hidden layer activation function is f(Vh\u209c)",
+                        "is_correct": false,
+                        "explanation": "The function f(Vh\u209c) is used for the output layer, not the hidden layer."
+                    },
+                    {
+                        "text": "The hidden layer activation function is softmax(Vh\u209c)",
+                        "is_correct": false,
+                        "explanation": "The softmax function is used for the output layer to compute probabilities, not for the hidden layer."
+                    },
+                    {
+                        "text": "The hidden layer activation function is Uht\u208b\u2081",
+                        "is_correct": false,
+                        "explanation": "Uht\u208b\u2081 is a component of the hidden layer activation function, but it is not the function itself."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the process of unrolling a recurrent network?",
+                "answers": [
+                    {
+                        "text": "Unrolling a recurrent network involves creating a feedforward computational graph by duplicating the network's layers for each time step.",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that unrolling a recurrent network involves duplicating the network's layers for each time step to eliminate recurrence and create a feedforward computational graph."
+                    },
+                    {
+                        "text": "Unrolling a recurrent network means reversing the sequence of inputs to the network.",
+                        "is_correct": false,
+                        "explanation": "The concept description does not mention reversing the sequence of inputs as part of the unrolling process."
+                    },
+                    {
+                        "text": "Unrolling a recurrent network requires removing all hidden layers from the network.",
+                        "is_correct": false,
+                        "explanation": "The concept description does not suggest removing hidden layers; instead, it involves duplicating layers for each time step."
+                    },
+                    {
+                        "text": "Unrolling a recurrent network involves training the network using a different set of weights for each time step.",
+                        "is_correct": false,
+                        "explanation": "The concept description states that the weight matrices are shared across time, not that different weights are used for each time step."
+                    }
+                ],
+                "topic": "Rnns",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Rnns"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            }
+        ],
+        "summary": "Purpose of the Document:\nThe document introduces Recurrent Neural Networks (RNNs) and their variants, particularly Long Short-Term Memory (LSTM) networks, for modeling sequential data in natural language processing (NLP). It explains their structure, training processes, and applications in tasks like language modeling, sequence labeling, and sequence classification.\n\nMain Ideas:\n\u2022 Introduction to RNNs and their ability to model temporal sequences\n\u2022 Explanation of simple recurrent networks (Elman nets) and their forward inference\n\u2022 Training processes for RNNs, including backpropagation through time\n\u2022 Applications of RNNs in language modeling, sequence labeling, and sequence classification\n\u2022 Introduction to LSTMs and their advantages in handling long-term dependencies\n\u2022 Encoder-decoder architectures using RNNs and LSTMs for tasks like machine translation\n\u2022 Attention mechanisms to improve context representation in encoder-decoder models\n\nKey Concepts:\n\u2022 Recurrent Neural Networks (RNNs)\n\u2022 Simple Recurrent Networks (Elman nets)\n\u2022 Forward inference in RNNs\n\u2022 Backpropagation through time\n\u2022 Language modeling with RNNs\n\u2022 Sequence labeling and classification\n\u2022 Long Short-Term Memory (LSTM) networks\n\u2022 Encoder-decoder architectures\n\u2022 Attention mechanisms\n\nKey Takeaways:\n\u2022 RNNs are designed to model sequential data by maintaining a hidden state that captures information from previous time steps.\n\u2022 Simple recurrent networks use a hidden layer with a recurrence to process sequences incrementally.\n\u2022 Training RNNs involves backpropagation through time, which requires unrolling the network to compute gradients.\n\u2022 RNNs can be used for language modeling, sequence labeling, and sequence classification tasks.\n\u2022 LSTMs address the vanishing gradient problem in RNNs by using gated mechanisms to control information flow.\n\u2022 Encoder-decoder architectures with RNNs and LSTMs are effective for tasks like machine translation.\n\u2022 Attention mechanisms improve the performance of encoder-decoder models by focusing on relevant parts of the input sequence."
+    },
+    "data/raw/Transformers.pdf": {
+        "metadata": {
+            "file_name": "Transformers.pdf",
+            "file_type": "pdf",
+            "content_length": 48240,
+            "language": "en",
+            "extraction_timestamp": "2025-11-27T19:16:10.004622+00:00",
+            "timezone": "utc"
+        },
+        "content": " Introduction to Transformers\n\nTransformers\n---\nLLMs are built out of transformers\n\nTransformer: a specific kind of network architecture, like a\nProvided proper attribution is provided, Google hereby grants permission to\nfancier feedforward network, but based on attention\nreproduce the tables and figures in this paper solely for use in journalistic or\nscholarly works.\n\nAttention Is All You Need\n\n2023        Ashish Vaswani\u21e4      Noam Shazeer\u21e4    Niki Parmar\u21e4      Jakob Uszkoreit\u21e4\n            Google Brain         Google Brain     Google Research   Google Research\nAug         avaswani@google.com  noam@google.com  nikip@google.com  usz@google.com\n            Llion Jones\u21e4         Aidan N. Gomez\u21e4 \u2020         \u0141ukasz Kaiser\u21e4\n2          Google Research    University of Toronto          Google Brain\n[cs.CL]    llion@google.com    aidan@cs.toronto.edu    lukaszkaiser@google.com\n                                 Illia Polosukhin\u21e4 \u2021\n                                 illia.polosukhin@gmail.com\n---\nA very approximate timeline\n\n1990 Static Word Embeddings\n2003 Neural Language Model\n2008 Multi-Task Learning\n2015 Attention\n2017 Transformer\n2018 Contextual Word Embeddings and Pretraining\n2019 Prompting\n---\n Attention\n\nTransformers\n---\n    Instead of starting with the big picture\n    Let's consider the embeddings for an individual word from a particular layer\nNext token  long  and  thanks  for    all\nNext token  long  and  thanks  for    all\nLanguage  logits    logits    logits    logits    logits    \u2026\nModeling\n Language  logits U    logits U    logits  U  logits  U  logits  U  \u2026\n  Head\n Modeling    U         U                   U  U                  U\n  Head\n\n                   \u2026  \u2026  \u2026  \u2026  \u2026\n    Stacked        \u2026  \u2026  \u2026  \u2026  \u2026\n    Stacked                     \u2026\n    Transformer                 \u2026\n    Transformer\n    Blocks\n    Blocks\n\n                                                      \u2026\n                x1    x2    x3    x4    x5            \u2026\n                x1    x2    x3    x4    x5\n Input          +     1  +  2  +  3  +  4  +  5       \u2026\n Input          +     1    +  2    +  3  +  4  +   5  \u2026\n    Encoding    E          E       E     E     E\nEncoding        E          E       E          E    E\nInput tokens    So         long    and   thanks    for\nInput tokens    So         long    and   thanks    for\n---\nProblem with static embeddings (word2vec)\n\nThey are static! The embedding for a word doesn't reflect how its\nmeaning changes in context.\n\nThe chicken didn't cross the road because it was too tired\n\nWhat is the meaning represented in the static embedding for \"it\"?\n---\nContextual Embeddings\n\n\u2022       Intuition: a representation of meaning of a word\n        should be different in different contexts!\n\u2022       Contextual Embedding: each word has a different\n        vector that expresses different meanings\n        depending on the surrounding words\n\u2022       How to compute contextual embeddings?\n     \u2022  Attention\n---\nContextual Embeddings\n\nThe chicken didn't cross the road because it\n\nWhat should be the properties of \"it\"?\n\nThe chicken didn't cross  the road because it was  too  tired\nThe chicken didn't cross  the road because it was  too  wide\n\nAt this point in the sentence, it's probably referring to either the chicken or the street\n---\nIntuition of attention\n\nBuild up the contextual embedding from a word by\nselectively integrating information from all the\nneighboring words\nWe say that a word \"attends to\" some neighboring\nwords more than others\n---\nIntuition of attention:\n\ncolumns corresponding to input tokens\ntest\n    chicken            because\n    didn\u2019t                    tired\nLayer k+1  The         cross road  was too\n                       the         it\n\nself-attention distribution\n\nchicken                    because\ndidn\u2019t                            tired\nLayer k                    cross road  was too\n           The             the         it\n---\nAttention definition\n\nA mechanism for helping compute the embedding for\na token by selectively attending to and integrating\ninformation from surrounding tokens (at the previous\nlayer).\n\nMore formally: a method for doing a weighted sum of\nvectors.\n---\n    Attention is left-to-right\n\n    a1    a2    a3    a4    a5\n\nSelf-Attention  attention    attention    attention    attention    attention\n    Layer\n\n    x1                       x2           x3           x4           x5\n---\n ords to other words? Since our representations for\n    Simplified version of attention: a sum of prior words\n    Verson 1:         score(xi , x j ) = xi \u00b7 x j                   (1\ne use of our old friend the  dot product that we used\n    weighted by their similarity with the current word\nty in Chapter 6, and also played a role in attention in\nsult of a dot product is a scalar value ranging from \u2212\u2022 to \u2022, the la\n sult   Given a sequence of token embeddings:\n e      of this comparison between words             i and j as a\n   more similar the vectors that are being compared. Continuing with o\n quation  x\u2081  x\u2082 x\u2083   x\u2084     x\u2085 x\u2086 x\u2087    xi\nhe        to add attention to the computation of this\n     first step in computing y3 would be to compute three scores: x3\n x   \u00b7 x  Produce: a = a weighted sum of x through x   (and x )\n          . Then to make effective use of these scores, we\u2019ll normalize t\n     3    3    i                         1             7    i\n               Weighted by their similarity to x\n  ax to create a vector of weights,  a , that indicates the proporti\nRS AND         L ARGE L ANGUAGE M ODELSi j i\nof each input to the input element i that is the current focus of attentio\n rson 1:       score(xi , x j ) = xi \u00b7 x j                  (10.4)\nch weighted by its  a value.\nt is a         ai j  = softmax(score(xi , x j )) \u2200 j \u2264 i            (1\n               scalar value ranging from         \u2212\u2022 to \u2022, the larger\n               a     = X exp(score(x , x ))\n vectors that        a x             i        j             (10.7)\n                 are being compared. Continuing with our\n                 i   = Pi i j j                    \u2200 j \u2264 i          (1\n                     j\u2264i      exp(score(xi , xk ))\n---\nIntuition of attention:\n columns corresponding to input tokens\n\n test    chicken    because\n         didn\u2019t\n Layer k+1  The  cross road    too tired\n                    the        it was\n\n self-attention distribution\n\n chicken                    because\n didn\u2019t                            tired\n Layer k  The               cross road\n                            the       it was too\n\n          x1 x2 x3 x4 x5 x6 x7        xi\n---\nAn Actual Attention Head: slightly more complicated\n\nHigh-level idea: instead of using vectors (like xi and x\u2084)\ndirectly, we'll represent 3 separate roles each vector xi plays:\n\u2022     query: As the current element being compared to the\n      preceding inputs.\n\u2022     key: as a preceding input that is being compared to the\n      current element to determine a similarity\n\u2022     value: a value of a preceding element that gets weighted\n      and summed\n---\nAttention intuition columns corresponding to input \u1d57\u1d52\u1d4f\u1d49\u207f\u02e2\n query\n chicken    because\n didn\u2019t            tired\n Layer k+1  The  cross road  was too\n                 the         it\n\n self-attention distribution\n\n                 chicken    because\n                 didn\u2019t             tired\n Layer k                    cross road  was too\n            The             the         it\n\n            x1 x2 x3 x4 x5 x6 x7        xi\n            values\n---\nIntuition of attention:\n                columns corresponding to input tokens\n                                                query\n\n                  chicken                      because\n                       didn\u2019t                          tired\nLayer k+1  The               cross       road          was too\n                                   the               it\n\nself-attention distribution\n\n                  chicken                      because\n                       didn\u2019t                                 tired\nLayer k                      cross       road          was too\n           The                     the               it\n\nkeys       x1 x2 x3 x4 x5 x6 x7 xi\nvalues     k      k     k     k     k     k     k     k\n           v      v     v     v     v     v     v     v\n---\n ine a similarity weight. We\u2019ll refer to this role as a k\n    An Actual Attention Head: slightly more complicated\nlly, as a value of a preceding element that gets weigh\n pute the output for the current element.\n    We'll use matrices to project each vector xi into a\n    representation of its role as query, key, value:\nhese three different roles, transformers introduce w\nW V\u2022    query: WQ\n    . These weights will project each input vector x\n   \u2022    key: W\u1d37                                         i\n s a key, query, or value:\n   \u2022    value: W\u2c7d\n\n        qi = xi W Q ;  ki = xi W K ;  vi = xi W V\n\njections, when we are computing the similarity of t\n---\no capture these three different roles, transformers introduce w\n    K  An Actual Attention Head: slightly more complicated\nW , and W V . These weights will project each input vector xi i\nof its role as a key, query, or value:\n       Given these 3 representation of xi\n              qi = xi W Q ;  ki = xi W K ;  vi = xi W V\n       To compute similarity of current element x with\n these projections, when we are computing the similarity of th\n x     some prior element x                 i\n    with some prior element x , we\u2019ll use the dot product betw\n    i  W      j                j\n nt\u2019s  e\u2019ll use dot product between   q and k .\n       query vector q and the preceding element\u2019s key vector k\n       And instead   i                i     j                 j\n ult of a            of summing up x , we'll sum up v\n              dot product can be an arbitrarily large (positive or negat\n                                j                    j\n entiating large values can lead to numerical issues and loss of g\nng. To avoid this, we scale the dot product by a factor related to\n---\n    i                                 i\n by summing the values of the prior elements, each weig\ns   Final equations for one attention head\n   key to the query from the current element:\n\n    qi = xi WQ ; k j      = x j W\u1d37 ; v j = x j W\u2c7d\n                          qi \u00b7 k j\n    score(xi , x j ) =      \u221adk\n\n                 ai j     = softmax(score(xi , x j )) \u2200 j \u2264 i\n                 ai       = X ai j v j\n                          j\u2264i\n---\n    Calculating the value of a3\n\n    5. Weigh each value vector\n                                         \ud6fc3,1\n    4. Turn into \ud6fci,j weights via softmax\n\n    3. Divide score by \u221adk  \u221adk              \u00f7\n\n 2. Compare x3\u2019s query with\nthe keys for x1, x2, and x3\n\n                                         Wk  k\n   1. Generate                           Wq  q\nkey, query, value\n     vectors    x1                       Wv  v\n\n    \u00d7\n\n    Output of self-attention  a\u2083\n\n6. Sum the weighted\n   value vectors\n\n    \u00d7\n    \ud6fc3,2    \ud6fc3,3\n\n    \u221adk \u00f7    \u221adk  \u00f7\n\n           Wk  k           Wk  k\n\n           Wq  q           Wq  q\n\n    x2     Wv  v    x3     Wv  v\n---\nActual Attention: slightly more complicated\n\n\u2022     Instead of one attention head, we'll have lots of them!\n                                                      9.2   \u2022   T RANSFORMER B LOCKS         7\n\u2022     Intuition: each head might be attending to the context for different purposes\n     shows an intuition.\n     \u2022  Different linguistic relationships or patterns in the context\n\n        qc = xi WQc ;   kc = x j WKc ;  vc         = x j WVc ;  \u2200 c  1 \u2264 c \u2264 h               (9.14)\n        i               j               j\n                                                   qc \u00b7 kc\n                             c                        i     j\n                             score (xi , x j ) =     \u221adk                                     (9.15)\n\n                                        a c        = softmax(scorec (xi , x j )) \u2200 j \u2264 i     (9.16)\n                                            i j       X\n                                          headc    =        a c vc                           (9.17)\n                                        i                   i j  j\n                                                      j\u2264i\n                                        ai         = (head1 \u2295 head2 ... \u2295 headh )WO          (9.18)\n        MultiHeadAttention(xi , [x1 , \u00b7 \u00b7 \u00b7 , xN ]) = ai                                     (9.19)\n---\n    Multi-head attention\n\n                           ai\n\n    Project down to d      W\u1d3c [hdv x d] [1 x d]\n\n    Concatenate Outputs    \u2026                                    [1 x hdv ]\n\n     Each head             Head 1[1 x dv ]  Head 2 [1 x dv ]    Head 8\nattends differently        W\u1d37 W\u2c7d WQ         W\u1d37 W\u2c7d WQ       \u2026    W\u1d37 W\u2c7d WQ\n     to context            1  1      1      2  2      2         8         8  8\n\n    \u2026 xi-3 xi-2  xi-1                          xi  [1 x d]\n                                                      ai\n---\nSummary\n\nAttention is a method for enriching the representation of a token by\nincorporating contextual information\nThe result: the embedding for each word will be different in different\ncontexts!\nContextual embeddings: a representation of word meaning in its\ncontext.\nWe'll see in the next lecture that attention can also be viewed as a\nway to move information from one token to another.\n---\n Attention\n\nTransformers\n---\n  The Transformer Block\n\nTransformers\n---\n    Reminder: transformer language model\n\n    Next token  long  and  thanks  for    all\n\nLanguage        logits    logits    logits    logits    logits    \u2026\nModeling        U         U         U         U         U\n  Head\n\n    Stacked    \u2026  \u2026  \u2026  \u2026  \u2026  \u2026\nTransformer\n   Blocks\n\n    x1    x2    x3    x4    x5              \u2026\n\n Input    +  1  +  2  +  3  +  4  +  5      \u2026\nEncoding    E    E    E     E     E\n\n    Input tokens  So  long  and  thanks  for\n---\n    The residual stream: each token gets passed up and\n    modified\n\n    hi-1    hi    hi+1\n\n    +\n\n     Feedforward\n\n    \u2026    Layer Norm    \u2026\n         +\nMultiHead\nAttention\n\n          Layer Norm\n\n    xi-1    xi    xi+1\n---\network be larger than the model dimensionality d .  (For example in the orig\n ansformer model, d = 512 and d  = 2048.)\n    We'll need nonlinearities, so a feedforward layer\n    ff\n    FFN(xi ) = ReLU(xi W1 + b1 )W2 + b2              (9\n\n ayer Norm    h                  h                  h\n              At two stages in the transformer block we normalize the vector\n              i-1                i                  i+1\nt al., 2016). This process, called layer norm (short for layer normalization), is\n                                 +\n\n                                      Feedforward\n\n              \u2026                       Layer Norm       \u2026\n                                 +\nMultiHead\nAttention\n                                      Layer Norm\n\n                   xi-1          xi                 xi+1\n---\n    Layer norm: the vector xi is normalized twice\n\n    hi-1    hi    hi+1\n\n    +\n\n     Feedforward\n\n    \u2026    Layer Norm    \u2026\n         +\nMultiHead\nAttention\n\n          Layer Norm\n\n    xi-1    xi    xi+1\n---\n ken. Thus the input to layer norm is a single vector of dimensionality                                  d\n                                         v\n utput is that vector normalized,        u\n                                 d  again of dimensionality d . The first step in\n                         X u                  d\n    Layer                1                    X\n                   Norm                  t 1\nrmalization is to calculate the mean,       \u03bc , and standard deviation, s , over the\n                   \u03bc     =    s     x                2          (9.21)\n s of the vector to        d        = i     d  (xi \u2212 \u03bc )                                                  (9.22)\n                      be normalized. Given an embedding vector x of dimen-\ny d , these values are     vi=1                i=1\n                         calculated as follows.\n     Layer norm is a variation u\n                           of the z-score from statistics, applied to a single vec- tor in a hidden layer\n                               u    d\n these values, the                  X\n                       vector components are normalized by subtracting the mean\n                   s     = t 1        d (x  \u2212 \u03bc )2              (9.22)\n ach and dividing                1 X i\n                      by the standard deviation. The result of this computation is\nvector with zero         \u03bc = dd i=1      xi                     (9.21)\n                   mean and a standard deviation of one.\nlues, the                        vi=1\n              vector components are normalized by subtracting the mean\n                                 u       d (x \u2212 \u03bc )\n                                 u 1 X\n                                    \u02c6\n                                 t x =                                                                    (9.23)\n ividing by the standard deviation. The result of this computation is\n                         s =                   (x \u2212 \u03bc )2        (9.22)\n th zero mean and a standard d                 is\n                                    deviation of one.\n                                         i=1\nly, in the standard implementation of layer normalization, two learnable param-\n ese values, the              (x \u2212 \u03bc )\n g and b             vector components are normalized by subtracting the mean\n          , representing gain and offset values, are introduced.\n                         \u02c6\n h and                   x =                                    (9.23)\n           dividing by the standard deviation. The result of this computation is\nctor with zero mean                 s            (x \u2212 \u03bc )\n                        and a standard deviation of one.\n                         LayerNorm(x) = g                   + b\ntandard implementation of layer normalization, two learnable param-                                       (9.24)\n, representing                      (x \u2212 \u03bc )          s\n              gain and offset values, are introduced.\n---\n                   Putting it all together    The function computed by a transforme\n     Putting together a single transformer block\n                   pressed by breaking it down with one equation for each compo\n                   using t (of shape [1 \u00d7 d ]) to stand for transformer and supersc\n                   each computation inside the block:\n  hi-1    hi                      hi+1\n                                         t1   = LayerNorm(xi )\n          +                              i                              \u21e5    \u21e4\n                                         t2   = MultiHeadAttention(t1 ,      x1 , \u00b7 \u00b7 \u00b7 , x1  )\n                   Feedforward           i                    i              1  N\n                    Layer Norm           t3   = t2 + xi\n\u2026                                     \u2026  i    i\n          +                              t4   = LayerNorm(t3 )\n                    MultiHead            i              i\n                    Attention            t5   = FFN(t4 )\n                    Layer Norm           i    5  3i\n                                         hi   = ti + ti\n     xi-1    xi                   xi+1\n                   Notice that the only component that takes as input information\n                   (other residual streams) is multi-head attention, which (as we see\n---\n    A transformer is a stack of these blocks\n    so all the vectors are of the same dimensionality d\n\n    hi-1    hi    hi+1\n\n    +\n\n                    Feedforward\n\n    Block 2    \u2026  +  Layer Norm    \u2026\n\n                     MultiHead\n                     Attention\n\n                     Layer Norm\n\n    xi-1    xi    xi+1\n\n    hi-1    hi    hi+1\n\n    +\n\n     Feedforward\n\n    Block 1    \u2026  +  Layer Norm    \u2026\nMultiHead\nAttention\n\nLayer Norm\n\n    xi-1    xi    xi+1\n---\n     Residual streams and attention\n\n    Notice that all parts of the transformer block apply to 1 residual stream (1\n     token).\n    Except attention, which takes information from other tokens\n     Elhage et al. (2021) show that we can view attention heads as literally moving\n     information from the residual stream of a neighboring token into the current\n     stream .\n\nToken A      Token B\nresidual     residual\n    stream    stream\n---\n  The Transformer Block\n\nTransformers\n---\n Parallelizing Attention\n Computation\nTransformers\n---\n  9.3  Parallelizing computation using X\n       \u2022  PARALLELIZING COMPUTATION USING A SINGLE MATRIX X  11\n       For attention/transformer block we've been computing a single\n ension).\n       output at a single time step i in a single residual stream.\n allelizing attention  Let\u2019s first see this for a single attention head and then turn\n       But we can pack the N tokens of the input sequence into a single\n ultiple heads, and then add in the rest of the components in the transformer\n       matrix X of size [N \u00d7 d].\n k. For one head we multiply X by the key, query, and value matrices WQ of\n       Each row of X is the embedding of one token of the input.\n e [d \u00d7 dk ], WK of shape [d \u00d7 dk ], and WV of shape [d \u00d7 dv ], to produce matrices\n       X can have 1K-32K rows, each of the dimensionality of the\n f shape [N \u00d7 dk ], K \u2208 RN \u00d7d\u1d4f , and V \u2208 RN \u00d7d\u1d5b , containing all the key, query, and\n       embedding d (the model dimension)\n e vectors:\n           Q = XWQ ;            K = XWK ; V = XWV                 (9.31)\nen these matrices we can compute all the requisite query-key comparisons simul-\n ously by multiplying Q and K| in a single matrix multiplication. The product is\n---\nQK\u1d40\n\nNow can do a single matrix multiply to combine Q and K\u1d40\n\nq1\u2022k1 q1\u2022k2 q1\u2022k3 q1\u2022k4\n\n q2\u2022k1  q2\u2022k2  q2\u2022k3  q2\u2022k4\nN\n q3\u2022k1  q3\u2022k2  q3\u2022k3  q3\u2022k4\n\nq4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4\n\nN\n---\n  The N \u00d7 N QK| matrix showing how it computes all q \u00b7 k comparisons\nx   Parallelizing attention    i                         j\n    multiple.\n    \u2022 Scale the scores, take the softmax, and then\n e have this QK| matrix, we can very efficiently scale these scores,\n , and  multiply the result by V resulting in a matrix of\n        then multiply the result by V resulting in a matrix of shape N\n        shape N \u00d7 d\nbedding representation for each token in the input. We\u2019ve reduced\n        \u2022 An attention vector for each input token\nattention step for an entire sequence of N tokens for one head to\n omputation:       \u2713                \u2713 QK| \u25c6\u25c6\n\n                A = softmax mask    \u221adk     V             (9\n\n ut the future  You may have noticed that we introduced a mask func\n---\n lf-attention step for an entire sequence of N tokens for one head\nng   Masking out the future\n     computation:    \u2713     \u2713 QK| \u25c6\u25c6\n\n                     A = softmax mask  \u221adk   V\n\n g   \u2022 What is this mask function?\n   out the future    You may have noticed that we introduced a mask f\n .32  QK\u1d40 has a score for each query dot every key,\n      above. This is because the self-attention computation as we\u2019ve de\n      including those that follow the query.\nroblem: the calculation in  QK| results in a score for each quer\n      \u2022 Guessing the next word is pretty simple if you\n key value,  including those that follow the query. This is inapprop\n      already know it!\nng of language modeling: guessing the next word is pretty simple\nknow it!     To fix this, the elements in the upper-triangular portion\n re zeroed out (set to \u2212\u2022), thus eliminating any knowledge of wo\nn the sequence.      This is done in practice by adding a mask matrix\n---\n ctor embedding representation for each token in the input. We\u2019ve reduced the\n ire self-attention step for an entire sequence of N tokens for one head to the\nlowing Masking out the future\n   computation:\n                                 \u2713  \u2713 QK| \u25c6\u25c6\n                 A = softmax        mask  \u221adk      V    (9.32)\n\n sking out the future  You may have noticed that we introduced a mask function\n q. 9.32 above. This is because the self-attention computation as we\u2019ve described\n    Add \u2013\u221e to cells in upper triangle                   q1\u2022k1 \u2212\u221e \u2212\u221e \u2212\u221e\nas a problem: the calculation in           QK| results in a score for each query value\n very key value,       including those that follow the query. This is inappropriate in\n    The softmax will turn it to 0                       q2\u2022k1 q2\u2022k2 \u2212\u221e \u2212\u221e\n setting of language modeling: guessing the next word is pretty simple if you\n                                                   N\neady know it!    To fix this, the elements in the                      \u2212\u221e\n                                                      upper-triangular portion of the\n                                                        q3\u2022k1 q3\u2022k2 q3\u2022k3\n trix are zeroed out (set to \u2212\u2022), thus eliminating any knowledge of words that\nlow in the sequence.   This is done in practice by      q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4\n                                                             adding a mask matrix M in\n ich Mi j = \u2212\u2022 \u2200 j > i (i.e. for the upper-triangular portion) and Mi j = 0 otherwise.\n . 9.9 shows the resulting masked QK| matrix. (we\u2019ll see            N\n                                                                  in Chapter 11 how to\n---\n ctor embedding representation for each token in the input. We\u2019ve reduced the\n ire self-attention step for an entire sequence of N tokens for one head to the\nlowing Another point: Attention is quadratic in length\n   computation:\n                                 \u2713  \u2713 QK| \u25c6\u25c6\n                 A = softmax        mask  \u221adk      V    (9.32)\n\n sking out the future   You may have noticed that we introduced a mask function\n q. 9.32 above. This is because the self-attention computation as we\u2019ve described\n                                 q1\u2022k1 \u2212\u221e \u2212\u221e       \u2212\u221e\nas a problem: the calculation in           QK| results in a score for each query value\n very key value,       including those that follow the query. This is inappropriate in\n setting of language modeling:   q2\u2022k1 q2\u2022k2 \u2212\u221e    \u2212\u221e\n                        N       guessing the next word is pretty simple if you\neady know it!    To fix this, the elements in the upper-triangular portion of the\n                                 q3\u2022k1 q3\u2022k2 q3\u2022k3 \u2212\u221e\n trix are zeroed out (set to \u2212\u2022), thus eliminating any knowledge of words that\nlow in the sequence.             q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4\n                                 This is done in practice by adding a mask matrix M in\n ich Mi j = \u2212\u2022 \u2200 j > i (i.e. for the upper-triangular portion) and Mi j = 0 otherwise.\n . 9.9 shows the resulting masked QK|        N\n                                               matrix. (we\u2019ll see in Chapter 11 how to\n---\n Q  Q  X  X  K  K  X  X  V  V\n Attention again  V  V\n X  Input  Q WK WK  Key  Key  K  W  W\n Query  Input  X  Input Input  X Value Value  V\n Query Q  XToken 1  K  Token 1  X  V\n Token 1  Token 1  Token 1\n Token 1  Token 1\n Token 1  Token 1\n Token 1  XX  Q  X  Q Q  Q  X X  X K  K VK  K  X X  WV  V  V\n Input  Input  K  Input  Key  W  Key  Input  X  V\n Input  Key  Input Input\n Query Query  W Input  Query W  Key  Input  K  W  Value  Value Value  V  Value\n Token 1\n Query  Token 2  Token 1 Token 2  Token 1  Token 1  V\n Q  Token 2  W\n Token 2  K  Token 2  V  Token 1\n Input  Token 1  =  Token 2 K\n x  = Token 1  W  Key  Token 2\n Token 2  Token 1  Input  Token 2\n x  Token 1  Input\n Token 2  Q  Q  x  =  W W  Value\n =  Input  =\n W  Query  W  x  Token 1\n Token 1  Input  Input  Input  W  Key  Key  Input  Input  Value\n W  W  Value\n Input  Token 1  Query  Query  Token 1  Key  Token 1  Token 1\n Token 1  Token 1  Token 1  Input  Token 1  Token 1  Input  Token 1\n Token 1  Token 1  Token 1Token 1  Value\n Input Query  Key  Key  Input  Token 1\n Input  Key  Input  Token 1\n Query Query  Input  Token 1  Token 1  Input  Value  Value  Value\n Token 2\n Query  Input  Token 2  Token 2  x  =  Token 2  Key  Token 2  Token 2\n Input\n Input  Token 3  Input  =\n Token 3  Token 2  x\n x  =  Token 3  Token 3  Key\n Input  Token 2  Input\n Token 3  Token 2  Input  Value\n Query =  Input  Token 3  Key  Input  Token 3  Value\n Token 2\n Token 3  x  Query  Token 3\n Token 2  Value\n Token 3  Query  x  =\n =  Token 2  Token 2  Token 2  Token 2\n Input  Token 2  Token 2  Token 2\n Token 2  =  =  Token 2\n Key  Token 2\n Token 2  InputToken 2  x  x  Token 2  Input  Token 2\n Token 2  Token 2  =\n =  x  = Value\n x  x =  =  x  x  Token 2\n Query Token 2  Key  x  =\n x Input\u1d35\u207f\u1d56\u1d58\u1d57  =  Key  Key  Input  Input\n Token 3  Input  Input  Value\n Query  Input  Token 3  Token 3  Value  Value\n Query Query  Input  Input  Input  Key Key  Token 3  Input  Token 3\n Input  Token 3  Query  Key  Input  Value\n Token 3  Query  Token 3Input  Token 3  Input  Value Value\n Token 4  Token 4  Token 3\n Query  Token 4  Token 4\n Token 3  d x d\n Token 3  Token 4  d x d  Token 3  Token 4  Token 3d x d  Token 4\n Token 3  d x d  Token 3\n Token 4  Token 3  Token 3  Token 4  Token 3\n Token 4  Token 3  Token 3  Token 3  Token 3\n Input  Token 3  k InputToken 3  Key  Token 3  Token 3\n k  v\n Token 3  v  Input  Token 3\n Input  Query  Key  Value\n k  Token 4  Input  Input  Input  Key  Value  Input\n Query  Input  Token 4  Token 4  Value\n Input  Query  Input  d x d  Key Key  Token 4 Input  d x d  Token 4\n N x d\n Token 4  N x Input  Input  Value\n Token 4  Query  d  Value\n Token 4  Query  Token 4  Token 4  d x d  Token 4  Token 4\n d x d  Token 4\n d x d  k  d x d  d x d\n Token 4  Token 4  Token 4  v  Token 4\n N x N x d  Token 4  N x d  k  N x d\n d  Token 4  N x d  k  Token 4  N x d\n Token 4  N x d\n d x d  d x d  k  Token 4\n k  Token 4  N x d Token 4  v\n k  d x d  v  Token 4  d  d x d  Token 4\n Token 4  x d  Token 4\n k  Token 4  v\n k  d x d  k  k  k  v  v\nk  N x d  d x d  k  N x d  N x d  v\n N x d\n N x d  N x d  k  N x d\n k  N x d  N x d\n N x d  N x d  N x d  k  N x d  N x d\n N x d  N x d  N x d  k  k  k  N x d  N x d  N x d  v v\n N x d  N x d  N x d  k  N x d\n k  N x d  N x d  k  N x d  N x d\n v\n k k  N x d  v  v\n\n KT  KT  T  T  T  T  T  T  V  A\n Q T QK  K  QK  masked  V  T  A  V  A\n QK  QK  masked\n T  Q  K  T T  QKT  QK  QKT  QK masked  V  A\n K  T  T  T  masked\n QQ  QK  K K  QK  QK  T  V  T  T  A  V  V  A  A\n masked  QK  masked\n q1  x  =  QK  QK  masked\n k1  k2  k3  k4  q1\u2022k1 q1\u2022k2 q1\u2022k3 q1\u2022k4  q1\u2022k1  \u2212\u221e  \u2212\u221e  \u2212\u221e  v1  a1\n q1\u2022k1\n =  =  \u2212\u221e  \u2212\u221e  \u2212\u221e  \u2212\u221e  q1\u2022k1\n k1  k2  k3  k4 x  q1\u2022k1  =  \u2212\u221e  \u2212\u221e  v1  v1  a1  a1\n k2  k3  q1  q1\u2022k4\n k4  q1\u2022k1  q1\u2022k2 q1\u2022k3  q1\u2022k1\n q1\u2022k2 q1\u2022k3 q1\u2022k4  q1\u2022k1  q1\u2022k1\n q1\u2022k1  q1\u2022k1\n x  k2  k3  k4  q1\u2022k1  \u2212\u221e  \u2212\u221e  \u2212\u221e  v1  a1\n k1  q1\u2022k1  q1\u2022k4\n q1  =  q1\u2022k2 q1\u2022k3  q1\u2022k1\n x  q1\u2022k1\n = q1  k1  k2  k3  k4  =  q1\u2022k1  \u2212\u221e  \u2212\u221e  \u2212\u221e  x v1  =  a1\n mask  q1\u2022k1 q1\u2022k2 q1\u2022k3 q1\u2022k4  \u2212\u221e  \u2212\u221e  \u2212\u221e\n \u2212\u221e  \u2212\u221e  \u2212\u221e  q1\u2022k1  v1  a1\n q1\u2022k1\n k1  k2  k3  k4  q1\u2022k1\n k1   k2  k3  k4  q2  q1\u2022k1 q1\u2022k2 q1\u2022k3 q1\u2022k4  v1 =  a1\n q1\u2022k1  q1\u2022k4  q1\u2022k1\n q1\u2022k2 q1\u2022k3  q1\u2022k1  q1\u2022k1\n q1\u2022k1  q1\u2022k1  \u2212\u221e   \u2212\u221e\n q1\u2022k1  q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4  x q2\u2022k1 q2\u2022k2  =  v2  a2\n mask  =  x  =  x  =\n q2  =  =  x  =\n mask  \u2212\u221e  \u2212\u221e  \u2212\u221e  x  =\n q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4  \u2212\u221e  v2  a2\n mask  q2q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4  q2\u2022k1 q2\u2022k1 q2\u2022k2  x =  v2 =\u2212\u221e  \u2212\u221e  a2  v2  a2\n q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4\n q2  q2\u2022k2  q2\u2022k1 q2\u2022k2  \u2212\u221e  \u2212\u221e\n q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4  =  v2  a2\n q3  =  q2\u2022k1 q2\u2022k2  \u2212\u221e  \u2212\u221e  v2  a2\n q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4  q2\u2022k1  \u2212\u221e  v3  a3\n \u2212\u221e  \u2212\u221e  q2\u2022k2\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  v2  q3\u2022k1 q3\u2022k2a2\n q2\u2022k1 q2\u2022k2  q2\u2022k3 q2\u2022k4  q2\u2022k1 q2\u2022k2  q3\u2022k3\n q3  q3  q4  d  x N  \u2212\u221e  v3  a3\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  \u2212\u221e  \u2212\u221e  v3  a3\n q3  q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  q3\u2022k1 q3\u2022k2  v3  a3\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  \u2212\u221e  q3\u2022k1  v3  q3\u2022k3  a3  v4  a4\n k  q3\u2022  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  q3\u2022k2 q3\u2022k3\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  k1 q3\u2022k2 q3\u2022k3  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4\n q3\u2022k1 q3\u2022k2 q3\u2022k3  \u2212\u221e  v3  a3\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  q3\u2022k1 q3\u2022k2 q3\u2022k3\n q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4  q3\u2022k1 q3\u2022k2 q3\u2022k3  \u2212\u221e  v3  a3\n d  x d  x N\n q4  q4  N  N d  x N\n d  x d  x N  x d  v4  a4\n N  k  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  v4N x d  N x d\n q4  k  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  a4\n d  x N  k  k  N x N  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  v4  a4\n q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  q4\u2022k1  N x N\n q4 v4  a4\n k  v4  \u2022k2 q4\u2022k3 q4\u2022k4  v  v\n k  q4\u2022k1 q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  q4\u2022k1  a4\n q4\u2022k2 q4\u2022k3 q4\u2022k4  q4\u2022k1 q4\u2022k2 q4\u2022k2 q4\u2022k3 q4\u2022k4\n k  q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4  q4\u2022k1 q4\u2022k2  q4\u2022k3 q4\u2022k4  v4  a4\n q4\u2022k3 q4\u2022k4\n N x d  N x d  N x d  N x d\n N x d  N x N  N x d  N x d\n k  N x N  N x d  N x d\n k  k  N x N N x N  N x N  v  v\n N x N  v  v  v   v\n N x d  N x d  N x d\n N x N  N x d  N x dN x d\n N x N x N  N x N\n N  N x N x N  v  v\n N  v  v  v  v\n---\n    Parallelizing Multi-head Attention\n    9.4  \u2022  T HE INPUT: EMBEDDINGS FOR TOKEN AND POSITION\n\ne self-attention output A of shape [N \u00d7 d ].\n\n            Qi = XWQi ; Ki = XWKi ;         Vi = XWVi    (9.\n            i  i        i                   \u2713 Qi Ki | \u25c6  i\n    headi = SelfAttention(Q , K , V ) =     softmax  \u221adk  V  (9.\n\n         MultiHeadAttention(X) = (head1 \u2295 head2 ... \u2295 headh )WO (9.\n\n tting it all together with the parallel input matrix X  The function compu\nparallel by an entire layer of N transformer block over the entire N input tok\nn be expressed as:\n---\n xpressed as:\n  Putting it all together with the parallel input matrix X  The function computed\n     Parallelizing Multi-head Attention\n  in parallel by an entire layer of N transformer block over the entire N input tokens\n             O = LayerNorm(X + MultiHeadAttention(X))       (9.36)\n  can be expressed as:\n             H = LayerNorm(O + FFN(O))                      (9.37)\n\nan break     O = LayerNorm(X + MultiHeadAttention(X))                       (9.36)\n             it down with one equation for each component computation, using\nhape [N \u00d7 d ]) to H   = LayerNorm(O + FFN(O))                               (9.37)\n             stand for transformer and superscripts to demarcate each\n tation inside the block:\n  Or we can break it down with one equation for each component computation, using\n  T          or\n     (of shape [N \u00d7 d ]) to stand for transformer and superscripts to demarcate each\n               T\u00b9        = MultiHeadAttention(X)            (9.38)\n  computation inside the block:\n               T\u00b2        = X + T\u00b9                           (9.39)\n               T\u00b3        = LayerNorm(T\u00b2 )                   (9.40)\n                         T\u00b9    = MultiHeadAttention(X)                      (9.38)\n               T\u2074        = FFN(T\u00b3 )                         (9.41)\n                         T\u00b2    = X + T\u00b9                                     (9.39)\n               T\u2075        = T\u2074 + T\u00b3                          (9.42)\n                         T\u00b3    = LayerNorm(T\u00b2 )                             (9.40)\n               H = LayerNorm(T\u2075 )                           (9.43)\n                         T\u2074    = FFN(T\u00b3 )                                   (9.41)\n---\n Parallelizing Attention\n Computation\nTransformers\n---\n  Input and output: Position\n                 embeddings and the Language\nTransformers     Model Head\n---\nToken and Position Embeddings\n\nThe matrix X (of shape [N \u00d7 d]) has an embedding for\neach word in the context.\nThis embedding is created by adding two distinct\nembedding for each input\n\u2022     token embedding\n\u2022     positional embedding\n---\nToken Embeddings\n\nEmbedding matrix E has shape [|V | \u00d7 d ].\n\u2022     One row for each of the |V | tokens in the vocabulary.\n\u2022     Each word is a row vector of d dimensions\n\nGiven: string \"Thanks for all the\"\n1. Tokenize with BPE and convert into vocab indices\nw = [5,4000,10532,2224]\n2. Select the corresponding rows from E, each row an embedding\n\u2022     (row 5, row 4000, row 10532, row 2224).\n---\nPosition Embeddings\n\nThere are many methods, but we'll just describe the simplest: absolute\nposition.\nGoal: learn a position embedding matrix Epos of shape [1 \u00d7 N ].\nStart with randomly initialized embeddings\n\u2022  one for each integer up to some maximum length.\n\u2022  i.e., just as we have an embedding for token fish, we\u2019ll have an\n   embedding for position 3 and position 17.\n\u2022  As with word embeddings, these position embeddings are learned along\n   with other parameters during training.\n---\nEach x is just the sum of word and position embeddings\n\n                 Transformer Block\n\nX = Composite\nEmbeddings\n(word + position)\n                 +  +  +  +       +\nWord             Janet  will  back  the  bill\nEmbeddings\nPosition         1            2  3       4   5\nEmbeddings       Janet  will     back  the  bill\n---\n    Language modeling head\n\n    y1  y2                                    \u2026      y|V|  Word probabilities  1 x |V|\n\n    Language Model Head                                    Softmax over vocabulary V\n    takes hLN and outputs a    u1  u2         \u2026      u|V|  Logits  1 x |V|\n    distribution over vocabulary V    Unembedding          Unembedding layer   d x |V|\n\n                                      layer = E\u1d40\n\n    h\u1d38\u2081    h\u1d38\u2082                           h\u1d38N    1 x d\n  Layer L\nTransformer\n   Block                              \u2026\n\n    w1  w2    wN\n---\n  Language modeling head\n\n  Unembedding layer: linear layer projects from hLN      (shape [1 \u00d7 d])       to logit vector\n\n  y1  y2         \u2026 y|V|  Word probabilities  1 x |V|    Why \"unembedding\"? Tied to E\u1d40\n                         Softmax over vocabulary V\n  u1  u2         \u2026 u|V|  Logits  1 x |V|\n      Unembedding        Unembedding layer   d x |V|     Weight tying, we use the same weights for\n      layer = E\u1d40\n            h\u1d38N    1 x d                                 two different matrices\n\n\u2026                           Unembedding layer maps from an embedding to a\n                            1x|V| vector of logits\n            wN\n---\n     This linear layer can be learned, but more commonly we tie this matri\ntranspose of) the embedding matrix E.                          Recall that in weight tying, we\nsame Language modeling head\n     weights for two different matrices in the model. Thus at the input sta\ntransformer the embedding matrix (of shape [|V | \u00d7 d ]) is used to map from a\n                                                          Logits, the score vector u\nvector over the vocabulary (of shape [1 \u00d7 |V |]) to an embedding (of shape\n                                                          One score for each of the |V |\nAnd then in the language model head, E\u1d40 , the transpose of the embedding m\nshape [d \u00d7 |V |]) is used to map back possible words in the vocabulary V .\n     y1  y2  \u2026    y|V|  Word probabilities  1 x |V|       from an embedding (shape [1 \u00d7 d ]) to\nover the vocabulary (shape [1\u00d7|V                          Shape 1 \u00d7 |V |.\n                        Softmax over vocabulary V      |]). In the learning process, E will be opti\nbe good at \u2026\n             doing both of these mappings. We therefore sometimes call the t\n     u1  u2       u|V|  Logits  1 x |V|                        Softmax turns the logits into\nE\u1d40 the Unembedding\n         unembedding layer because it is performing this reverse mapping.\n         layer = E\u1d40     Unembedding layer   d x |V|            probabilities over vocabulary.\n     A softmax layer turns the logits u                        Shape 1 \u00d7 |V |.\n               h\u1d38N     1 x d                              into the probabilities y over the voca\n\n\u2026                                                      u  = h\u1d38 E\u1d40\n                                                          N\n               wN                                      y  = softmax(u)\n---\nThe final transformer  Token probabilities\n                       softmax\nmodel    Language\n         Modeling\n           Head\n\ny1  y2  \u2026 y|V|    wi+1\n                  Sample token to\n                  generate at position i+1\nlogits    u1  u2  \u2026  u|V|\n\n                  U\n\n    \u2026                                                                   hLi\n                                                                   feedforward\n                                                         Layer L    layer norm\n    Token probabilities    y1  y2                        y|V|       attention    wi+1\n                                                                    layer norm\n                                                                      \u2026 h\u1d38\u207b\u00b9\u2071 = x\u1d38\u2071  Sample token to\n                                                                        h2i = x3i\n\n    Language  softmax                                              feedforward  generate at position i+1\n                                                         Layer 2    layer norm\n    Modeling                                                        attention\n                           logits    u1  u2  \u2026 u|V|                 layer norm\n    Head                                                                h1i = x2i\n                                                                   feedforward\n                                             U           Layer 1    layer norm\n                                                                    attention\n                                                                    layer norm\n\n                                                  hLi     Input       + x1i i\n\n                                         feedforward     Encoding     E\n                                                         Input token  wi\n---\n  Input and output: Position\n                 embeddings and the Language\nTransformers     Model Head\n---\nLarge    Dealing with Scale\nLanguage\nModels\n---\nScaling Laws\n\nLLM performance depends on\n\u2022  Model size: the number of parameters not counting\n   embeddings\n\u2022  Dataset size: the amount of training data\n\u2022  Compute: Amount of compute (in FLOPS or etc\nCan improve a model by adding parameters (more layers,\nwider contexts), more data, or training for more iterations\nThe performance of a large language model (the loss) scales\nas a power-law with each of these three\n---\n or example, Kaplan et al. (2020) found the following three relationsh\n  as a function of the number of non-embedding parameters N , the datas\n    Scaling Laws\nd the compute budget C, for models training with limited parameters, d\n    Loss L as a function of # parameters N, dataset size D, compute budget C (if other\n  pute budget, if in each case the other two properties are held constant:\n    two are held constant)  L(N ) = \u2713 Nc \u25c6aN\n\n                                            \u2713 N \u25c6a\n    L(D) =                                  Dc    D\n                                            \u2713 D \u25c6a\n                           L(C) =           Cc  C\n                                            C\n he number of (non-embedding) parameters N can be roughly computed\n    Scaling laws can be used early in training to predict what the loss would be if we were\n    to add more data or increase model size.\n(ignoring biases, and with d as the input and output dimensionality\n---\nmber of (non-embedding) parameters    N can be roughly computed as\n    Number of non-embedding parameters N\nring biases, and with   d as the input and output dimensionality of\nttn as the self-attention layer size, and dff the size of the feedforward lay\n         N         \u21e1 2 d nlayer (2 dattn + dff )\n                   \u21e1 12 nlayer d 2                                            (10\n                   (assuming dattn = dff /4 = d )\n-3, with n = 96 layers and dimensionality d = 12288, has 12 \u21e5 9\n 175 billion parameters.\n    Thus GPT-3, with n = 96 layers and dimensionality d = 12288, has 12 \u00d7 96 \u00d7\n    122882 \u2248 175 billion parameters.\nlues of  Nc , Dc , Cc , aN , aD , and aC depend on the exact transfor\nre, tokenization, and vocabulary size, so rather than all the precise va\n                                      2\n---\n      KV Cache\n10.5.2  KV Cache\nWe saw in Fig. ?? and in Eq. ?? (repeated below) how the attention vector can be\nvery efficiently computed in parallel for training, via two matrix multiplications:\n      In training, we can compute attention very efficiently in parallel:\n                \u2713 QK| \u25c6\n                A = softmax  pdk  V                                      (10.13)\n\n      But not at inference! We generate the next tokens one at a time!\n     Unfortunately we can\u2019t do quite the same efficient computation in inference as\nin    For a new token x, need to multiply by WQ , W\u1d37, and W\u2c7d to get query, key,\n     training. That\u2019s because at inference time, we iteratively generate the next tokens\none at values\n      a time. For a new token that we have just generated, call it xi , we need to\n      But don't want to recompute the key and value vectors for all the prior\ncompute its query, key, and values by multiplying by WQ , WK , and WV respec-\ntively. tokens x\n      But it would be a waste of computation time to recompute the key and value\n             <i\n      Instead,  store key and value vectors in memory in the KV cache, and\nvectors for all the prior tokens x<i ; at prior steps we already computed these key\nand   then we can just grab them from the cache\n      value vectors! So instead of recomputing these, whenever we compute the key\nand value vectors we store them in memory in the KV cache, and then we can just\ngrab them from the cache when we need them. Fig. 10.7 modifies Fig. ?? to show\n---\n  N x d N x d\n  KV N x d\u1d4f  k\n  Cache\n\n  Q  KT KT\nQ  Q\n\n q1  q1 x  x  q1   x =\n  k1  k2  k3  k4\n  k1  k2  k3   k4\n\n q2  q2  mask  q2\n\n q3  q3  q3\n\n  d d  x N\n  x N\n q4  q4  k  q4\n  k\n\n x d  N x d\n  N x d  k\n  k  k\n\n    Q\n\n    x\n\n    q4\n\n    1 x dk\n\n    k1\n\n    N x d    k    N x d\n    N x d    N x d    k  N x d    N x d\n    N x d             k    N x d    N x d\n             k             N x d    v    v    v\n\n           T T T                         T T                                T\n           K  QK                         T                             V           V           A     A         V     A\n              QK                         QKQK        masked            QK          masked\n                                         QK   masked\n\n    =               =                    \u2212\u221e   \u2212\u221e     \u2212\u221e          \u2212\u221e         \u2212\u221e           \u2212\u221e  \u2212\u221e\n         k2   k3    k4                        \u2212\u221e     \u2212\u221e                v1          v1          a1     a1       v1    a1\n         q1\u2022k1            q1\u2022k4\n    q1\u2022k1         q1\u2022k2 q1\u2022k3     q1\u2022k1  q1\u2022k1       q1\u2022k4\n                    q1\u2022k4                q1\u2022k2 q1\u2022k3                   q1\u2022k1\n           q1\u2022k2 q1\u2022k3                 q1\u2022k1q1\u2022k1                      q1\u2022k1\n                                       q1\u2022k1q1\u2022k1                      q1\u2022k1\n                                       q1\u2022k1\n\n                                  =      =                       =x    x                 =  =        x               =\n                                                     \u2212\u221e \u2212\u221e       \u2212\u221e                      \u2212\u221e  \u2212\u221e\n                                  q2\u2022k1 q2\u2022k2 q2\u2022k3     \u2212\u221e                v2       v2          a2     a2       v2    a2\n    q2   q2\u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4                        q2\u2022k4\n         \u2022k1 q2\u2022k2 q2\u2022k3 q2\u2022k4         q2\u2022k1q2\u2022k1 q2\u2022k2                q2\u2022k1 q2\u2022k2\n                                              q2\u2022k2\n\n                                                           \u2212\u221e    \u2212\u221e       v3       v3        \u2212\u221e       a3       v3    a3\n         q3\u2022k1 q3\u2022k2 q3\u2022k3 q3     q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4                                      a3\n    q3\u2022k1 q3\u2022k2 q3\u2022k3 q3\u2022k4       \u2022k4  q3\u2022k1q3\u2022k1 q3\u2022k2 q3\u2022k3          q3\u2022k1 q3\u2022k2 q3\u2022k3\n                                              q3\u2022k2 q3\u2022k3\n\n    dk x N                        q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4                 v4       v4          a4     a4       v4    a4\n    q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4                                            q4\u2022k1\n         q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4       q4\u2022k1q4\u2022k1                           q4\u2022k2 q4\u2022k3 q4\u2022k4\n                                              q4\u2022k2 q4\u2022k3 q4\u2022k4\n                                                     q4\u2022k2 q4\u2022k3 q4\u2022k4\n\n                                                                       N x d                N x d           N x d     N x d\n             N x N                            N x N                             N x d                N x d\n                  N x N                       N x N                             N x N\n                                                        N x N                   v        v           v      v        v\n\n    QKT    V    A\n    KT     v1\n\n    k1  k2  k3  k4  =    x                           v2    =\n\n                                                     v3\n        dk x N           q4\u2022k1 q4\u2022k2 q4\u2022k3 q4\u2022k4     v4     a4\n\n    1 x N    N x dv    1 x dv\n---\nLarge    Dealing with Scale\nLanguage\nModels\n\n",
+        "quiz": [
+            {
+                "question_text": "What is the name of the paper that introduced the Transformer architecture?",
+                "answers": [
+                    {
+                        "text": "Attention Is All You Need",
+                        "is_correct": true,
+                        "explanation": "The provided content explicitly states that the paper introducing the Transformer architecture is titled 'Attention Is All You Need'."
+                    },
+                    {
+                        "text": "Introduction to Transformers",
+                        "is_correct": false,
+                        "explanation": "This is mentioned as additional context but not as the title of the paper that introduced the Transformer architecture."
+                    },
+                    {
+                        "text": "Transformers.pdf",
+                        "is_correct": false,
+                        "explanation": "This is referenced in the concept description but not as the title of the paper that introduced the Transformer architecture."
+                    },
+                    {
+                        "text": "Key concepts from Transformers",
+                        "is_correct": false,
+                        "explanation": "This is part of the concept description but not the title of the paper that introduced the Transformer architecture."
+                    }
+                ],
+                "topic": "Transformers",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Transformers"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "Who are the primary authors of the 'Attention Is All You Need' paper?",
+                "answers": [
+                    {
+                        "text": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, \u0141ukasz Kaiser, and Illia Polosukhin",
+                        "is_correct": true,
+                        "explanation": "The correct authors are listed in the 'Attention Is All You Need' paper as provided in the content context."
+                    },
+                    {
+                        "text": "Yann LeCun, Yoshua Bengio, Geoffrey Hinton",
+                        "is_correct": false,
+                        "explanation": "These are prominent figures in the field of deep learning but are not listed as authors of the 'Attention Is All You Need' paper."
+                    },
+                    {
+                        "text": "Andrew Ng, Jeff Dean, Ray Kurzweil",
+                        "is_correct": false,
+                        "explanation": "These individuals are notable in the field of AI and technology but are not mentioned as authors of the 'Attention Is All You Need' paper."
+                    },
+                    {
+                        "text": "Elon Musk, Mark Zuckerberg, Sundar Pichai",
+                        "is_correct": false,
+                        "explanation": "These are well-known tech executives but are not associated with the authorship of the 'Attention Is All You Need' paper."
+                    }
+                ],
+                "topic": "Transformers",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Transformers"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the main issue with static word embeddings like word2vec?",
+                "answers": [
+                    {
+                        "text": "The embedding for a word doesn't reflect how its meaning changes in context.",
+                        "is_correct": true,
+                        "explanation": "The concept description explicitly states that static word embeddings like word2vec do not account for contextual meaning changes."
+                    },
+                    {
+                        "text": "They are too computationally expensive to implement.",
+                        "is_correct": false,
+                        "explanation": "The content context does not mention computational expense as an issue with static word embeddings."
+                    },
+                    {
+                        "text": "They require too much data to train effectively.",
+                        "is_correct": false,
+                        "explanation": "The content context does not discuss data requirements for static word embeddings."
+                    },
+                    {
+                        "text": "They are not based on neural network architectures.",
+                        "is_correct": false,
+                        "explanation": "The content context mentions neural language models, which are based on neural networks."
+                    }
+                ],
+                "topic": "Transformers",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Transformers"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the direction of attention in the Transformer architecture?",
+                "answers": [
+                    {
+                        "text": "left-to-right",
+                        "is_correct": true,
+                        "explanation": "The content explicitly states that 'Attention is left-to-right' in the Transformer architecture."
+                    },
+                    {
+                        "text": "right-to-left",
+                        "is_correct": false,
+                        "explanation": "The content does not mention any right-to-left attention mechanism in the Transformer architecture."
+                    },
+                    {
+                        "text": "bidirectional",
+                        "is_correct": false,
+                        "explanation": "The content specifies a left-to-right direction, not a bidirectional one."
+                    },
+                    {
+                        "text": "top-to-bottom",
+                        "is_correct": false,
+                        "explanation": "The content does not mention any top-to-bottom direction for attention in the Transformer architecture."
+                    }
+                ],
+                "topic": "Transformers",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Transformers"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            },
+            {
+                "question_text": "What is the simplified version of attention in Transformers based on?",
+                "answers": [
+                    {
+                        "text": "A sum of prior words weighted by their similarity with the current word",
+                        "is_correct": true,
+                        "explanation": "The simplified version of attention in Transformers is described as a sum of prior words weighted by their similarity with the current word, as indicated in the content context."
+                    },
+                    {
+                        "text": "A sum of all words in the sequence",
+                        "is_correct": false,
+                        "explanation": "The simplified version of attention is not a sum of all words but a sum of prior words weighted by their similarity with the current word."
+                    },
+                    {
+                        "text": "A weighted sum of random vectors",
+                        "is_correct": false,
+                        "explanation": "The simplified version of attention involves a weighted sum of vectors from surrounding tokens, not random vectors."
+                    },
+                    {
+                        "text": "A sum of words in a fixed order",
+                        "is_correct": false,
+                        "explanation": "The simplified version of attention is not based on a fixed order but on the similarity of words with the current word."
+                    }
+                ],
+                "topic": "Transformers",
+                "subtopic": "Main Content",
+                "concepts": [
+                    "Transformers"
+                ],
+                "difficulty": "easy",
+                "explanation": ""
+            }
+        ],
+        "summary": "Purpose of the Document:\nThe document provides an introduction to transformers, a type of network architecture used in building large language models (LLMs). It explains the concept of attention, contextual embeddings, and the structure of transformer blocks, including multi-head attention and parallel computation.\n\nMain Ideas:\n\u2022 Transformers are built using attention mechanisms to process sequences of data.\n\u2022 Contextual embeddings allow words to have different meanings based on their context.\n\u2022 Transformer blocks include multi-head attention and feedforward layers for processing input tokens.\n\u2022 Parallel computation techniques are used to efficiently process sequences of tokens.\n\u2022 Scaling laws describe how model performance depends on size, data, and compute resources.\n\nKey Concepts:\n\u2022 Transformers\n\u2022 Attention\n\u2022 Contextual embeddings\n\u2022 Transformer blocks\n\u2022 Multi-head attention\n\u2022 Parallel computation\n\u2022 Scaling laws\n\u2022 KV cache\n\nKey Takeaways:\n\u2022 Transformers use attention to incorporate contextual information into word embeddings.\n\u2022 Contextual embeddings allow words to have different meanings based on their context.\n\u2022 Transformer blocks include multi-head attention and feedforward layers for processing input tokens.\n\u2022 Parallel computation techniques are used to efficiently process sequences of tokens.\n\u2022 Scaling laws describe how model performance depends on size, data, and compute resources.\n\u2022 The KV cache stores key and value vectors to improve inference efficiency."
     }
 }
