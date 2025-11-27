@@ -140,6 +140,7 @@ class ParsedFileData(BaseModel):
     """Data structure for a parsed file."""
     metadata: ParsedFileMetadata
     content: str
+    summary: Optional[str] = None  # AI-generated summary
     quiz: Optional[List[Dict[str, Any]]] = None  # Quiz questions for this file
 
 
@@ -174,6 +175,7 @@ async def get_course():
             files[file_path] = ParsedFileData(
                 metadata=ParsedFileMetadata(**file_data["metadata"]),
                 content=file_data["content"],
+                summary=file_data.get("summary"),  # Include summary if present
                 quiz=file_data.get("quiz")  # Include quiz data if present
             )
         
