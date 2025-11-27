@@ -1,4 +1,3 @@
-import React from 'react'
 import { useUpload } from '../contexts/UploadContext'
 import './UploadIndicator.css'
 

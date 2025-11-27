@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Question, Performance, VideoRecommendation, VideoContent, Course, ParsedDataResponse } from '../types'
+import type { Question, VideoRecommendation, VideoContent, ParsedDataResponse } from '../types'
 
 const API_BASE_URL = '/api'
 
@@ -28,13 +28,25 @@ export const courseApi = {
     })
     return response.data
   },
+  
+  generateQuiz: async (fileKey: string, numQuestions: number = 5): Promise<{ success: boolean; message: string; data?: any }> => {
+    const response = await api.post(`/course/generate-quiz/${encodeURIComponent(fileKey)}?num_questions=${numQuestions}`)
+    return response.data
+  },
 }
 
 export const questionsApi = {
-  generateQuestion: async (performanceData?: Partial<Performance>): Promise<Question> => {
-    const response = await api.post<Question>('/questions/generate', {
-      performance_data: performanceData || null
-    })
+  startFileBasedQuiz: async (selectedFilePaths: string[], maxQuestions?: number): Promise<Question[]> => {
+    const requestBody: any = {
+      file_paths: selectedFilePaths
+    }
+    
+    // Include max_questions only if specified
+    if (maxQuestions && maxQuestions > 0) {
+      requestBody.max_questions = maxQuestions
+    }
+    
+    const response = await api.post<Question[]>('/questions/start-file-quiz', requestBody)
     return response.data
   },
   
@@ -76,43 +88,6 @@ export const questionsApi = {
       student_question: studentQuestion,
     })
     return response.data.response
-  },
-}
-
-export const performanceApi = {
-  recordAnswer: async (
-    performanceData: Partial<Performance>,
-    topic: string,
-    subtopic: string,
-    concept: string,
-    isCorrect: boolean
-  ): Promise<Performance> => {
-    const response = await api.post<Performance>('/performance/record-answer', {
-      performance_data: performanceData,
-      topic,
-      subtopic,
-      concept,
-      is_correct: isCorrect,
-    })
-    return response.data
-  },
-  
-  getWeakAreas: async (
-    performanceData: Partial<Performance>,
-    minAttempts: number = 2
-  ) => {
-    const response = await api.post('/performance/weak-areas', {
-      performance_data: performanceData,
-      min_attempts: minAttempts,
-    })
-    return response.data
-  },
-  
-  getSummary: async (performanceData: Partial<Performance>) => {
-    const response = await api.post('/performance/summary', {
-      performance_data: performanceData,
-    })
-    return response.data
   },
 }
 

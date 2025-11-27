@@ -14,32 +14,19 @@ export interface Question {
   explanation: string
 }
 
-export interface Performance {
-  total_questions_answered: number
-  total_correct: number
-  total_incorrect: number
-  trophy_score: number
-  overall_accuracy: number
-  topic_scores: Record<string, TopicScore>
+export interface QuizQuestion {
+  id: string
+  question_text: string
+  answers: AnswerOption[]
+  topic: string
+  subtopic: string
+  concepts: string[]
+  difficulty: string
+  explanation: string
+  created_at?: string
 }
 
-export interface TopicScore {
-  overall_accuracy: number
-  subtopic_scores: Record<string, SubtopicScore>
-}
 
-export interface SubtopicScore {
-  overall_accuracy: number
-  concept_scores: Record<string, ConceptScore>
-}
-
-export interface ConceptScore {
-  attempts: number
-  correct: number
-  incorrect: number
-  accuracy: number
-  is_weak: boolean
-}
 
 export interface VideoRecommendation {
   topic: string
@@ -97,6 +84,7 @@ export interface ParsedFileMetadata {
 export interface ParsedFileData {
   metadata: ParsedFileMetadata
   content: string
+  quiz?: QuizQuestion[]  // Quiz questions for this file
 }
 
 export interface ParsedDataResponse {

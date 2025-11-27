@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './CoursesPage.css'
 import { courseApi } from '../services/api'
 import { useUpload } from '../contexts/UploadContext'
+import { useQuizSelection } from '../contexts/QuizSelectionContext'
 import type { ParsedDataResponse } from '../types'
 
 export default function CoursesPage() {
@@ -17,6 +18,9 @@ export default function CoursesPage() {
   
   // Use global upload context for persistent upload tracking and success messages
   const { uploads, successMessages, startUpload, updateUpload, finishUpload, addSuccessMessage, clearSuccessMessages } = useUpload()
+  
+  // Use global quiz selection context for persisting quiz selections
+  const { selectedQuizFiles, totalQuestions, addQuizFile, removeQuizFile, isQuizSelected } = useQuizSelection()
 
   useEffect(() => {
     loadCourse()
@@ -133,12 +137,37 @@ export default function CoursesPage() {
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
-        console.log(`Adding ${files.length} files via drag & drop:`, files.map(f => f.name))
-        setSelectedFiles(prevFiles => [...prevFiles, ...files])
-        // Clear messages when new files are added
-        setUploadError(null)
-        setSuccess(null)
-        clearSuccessMessages()
+        // Filter out duplicate files based on name and size
+        const existingFileKeys = new Set(selectedFiles.map(f => `${f.name}-${f.size}`))
+        const newFiles = files.filter(file => {
+          const fileKey = `${file.name}-${file.size}`
+          return !existingFileKeys.has(fileKey)
+        })
+        
+        const duplicateCount = files.length - newFiles.length
+        if (duplicateCount > 0) {
+          setUploadError(`${duplicateCount} duplicate file(s) skipped. Files with the same name and size are already selected.`)
+        }
+        
+        if (newFiles.length === 0) {
+          return
+        }
+        
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + newFiles.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${newFiles.length} more.`)
+          return
+        }
+        
+        console.log(`Adding ${newFiles.length} files via drag & drop:`, newFiles.map(f => f.name))
+        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles])
+        // Clear messages when new files are added (only if no duplicates were found)
+        if (duplicateCount === 0) {
+          setUploadError(null)
+          setSuccess(null)
+          clearSuccessMessages()
+        }
       }
     }
   }
@@ -148,12 +177,39 @@ export default function CoursesPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
-        console.log(`Adding ${files.length} files via file input:`, files.map(f => f.name))
-        setSelectedFiles(prevFiles => [...prevFiles, ...files])
-        // Clear messages when new files are added
-        setUploadError(null)
-        setSuccess(null)
-        clearSuccessMessages()
+        // Filter out duplicate files based on name and size
+        const existingFileKeys = new Set(selectedFiles.map(f => `${f.name}-${f.size}`))
+        const newFiles = files.filter(file => {
+          const fileKey = `${file.name}-${file.size}`
+          return !existingFileKeys.has(fileKey)
+        })
+        
+        const duplicateCount = files.length - newFiles.length
+        if (duplicateCount > 0) {
+          setUploadError(`${duplicateCount} duplicate file(s) skipped. Files with the same name and size are already selected.`)
+        }
+        
+        if (newFiles.length === 0) {
+          e.target.value = ''
+          return
+        }
+        
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + newFiles.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${newFiles.length} more.`)
+          e.target.value = ''
+          return
+        }
+        
+        console.log(`Adding ${newFiles.length} files via file input:`, newFiles.map(f => f.name))
+        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles])
+        // Clear messages when new files are added (only if no duplicates were found)
+        if (duplicateCount === 0) {
+          setUploadError(null)
+          setSuccess(null)
+          clearSuccessMessages()
+        }
       }
     }
     // Reset the input value so the same files can be selected again
@@ -179,17 +235,26 @@ export default function CoursesPage() {
     // Clear the UI state immediately - files and messages, but NOT uploading state
     const filesToUpload = [...selectedFiles] // Copy the files before clearing
     setSelectedFiles([])
-    setUploadError(null)
+    // Don't clear uploadError here - wait until we have results
     setSuccess(null)
     clearSuccessMessages()
     // Remove setUploading(true) to allow consecutive uploads
     
+    // Track failed uploads as they happen
+    const failedUploads: Array<{ success: boolean; fileName: string; message: string; isDuplicate: boolean }> = []
+    
     // Process files individually so we can refresh after each successful upload
-    const uploadPromises = filesToUpload.map(async (file) => {
-      const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const uploadPromises = filesToUpload.map(async (file, index) => {
+      // Use index to ensure unique IDs even when files are uploaded simultaneously
+      const uploadId = `upload-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+      
+      // Small delay to stagger uploads (helps with UI updates)
+      await new Promise(resolve => setTimeout(resolve, index * 50))
       
       // Start global upload tracking
       startUpload(uploadId, file.name)
+      
+      console.log(`Started upload tracking for ${file.name} with ID: ${uploadId}`) // Debug log
 
       try {
         // Update status to processing
@@ -211,25 +276,90 @@ export default function CoursesPage() {
           return { success: true, fileName: file.name, message: result.message }
         } else {
           finishUpload(uploadId, false, result.message || 'Upload failed')
-          return { success: false, fileName: file.name, message: result.message || 'Upload failed' }
+          const failureResult = { success: false, fileName: file.name, message: result.message || 'Upload failed', isDuplicate: false }
+          failedUploads.push(failureResult)
+          updateErrorMessage(failedUploads) // Update error message immediately
+          return failureResult
         }
       } catch (err: any) {
         const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload PDF'
-        finishUpload(uploadId, false, errorMessage)
-        return { success: false, fileName: file.name, message: errorMessage }
+        const statusCode = err.response?.status
+        
+        // Provide clearer error message for duplicate files (409 Conflict)
+        let displayMessage = errorMessage
+        if (statusCode === 409) {
+          displayMessage = `Already uploaded - ${errorMessage}`
+        }
+        
+        console.log(`Upload failed for ${file.name}:`, { statusCode, errorMessage, displayMessage }) // Debug log
+        
+        finishUpload(uploadId, false, displayMessage)
+        const failureResult = { success: false, fileName: file.name, message: displayMessage, isDuplicate: statusCode === 409 }
+        failedUploads.push(failureResult)
+        updateErrorMessage(failedUploads) // Update error message immediately
+        return failureResult
       }
     })
+    
+    // Helper function to update error message immediately
+    const updateErrorMessage = (failures: Array<{ success: boolean; fileName: string; message: string; isDuplicate?: boolean }>) => {
+      const duplicateFiles = failures.filter(r => r.isDuplicate)
+      const otherFailures = failures.filter(r => !r.isDuplicate)
+      
+      let errorMessage = ''
+      
+      if (duplicateFiles.length > 0) {
+        errorMessage += `Already uploaded (${duplicateFiles.length} file${duplicateFiles.length > 1 ? 's' : ''}):\n`
+        errorMessage += duplicateFiles.map(r => `• ${r.fileName}`).join('\n')
+      }
+      
+      if (otherFailures.length > 0) {
+        if (errorMessage) errorMessage += '\n\n'
+        errorMessage += `Failed uploads (${otherFailures.length} file${otherFailures.length > 1 ? 's' : ''}):\n`
+        errorMessage += otherFailures.map(r => `• ${r.fileName}: ${r.message}`).join('\n')
+      }
+      
+      console.log('Setting upload error immediately:', errorMessage) // Debug log
+      setUploadError(errorMessage)
+    }
 
     try {
       const results = await Promise.all(uploadPromises)
       
-      // Check results for final summary
-      const failedUploads = results.filter(r => !r.success)
+      console.log('Upload results:', results) // Debug log
       
-      // Only handle failed uploads - individual success messages are already shown
+      // Separate failed uploads by type
+      const failedUploads = results.filter(r => !r.success)
+      const duplicateFiles = failedUploads.filter(r => r.isDuplicate)
+      const otherFailures = failedUploads.filter(r => !r.isDuplicate)
+      
+      console.log('Failed uploads:', failedUploads.length, 'Duplicates:', duplicateFiles.length, 'Other:', otherFailures.length) // Debug log
+      
+      // Build error message with clear sections
       if (failedUploads.length > 0) {
-        const errorMessages = failedUploads.map(r => `• ${r.fileName}: ${r.message}`).join('\n')
-        setUploadError(`Failed uploads:\n${errorMessages}`)
+        let errorMessage = ''
+        
+        if (duplicateFiles.length > 0) {
+          errorMessage += `Already uploaded (${duplicateFiles.length} file${duplicateFiles.length > 1 ? 's' : ''}):\n`
+          errorMessage += duplicateFiles.map(r => `• ${r.fileName}`).join('\n')
+        }
+        
+        if (otherFailures.length > 0) {
+          if (errorMessage) errorMessage += '\n\n'
+          errorMessage += `Failed uploads (${otherFailures.length} file${otherFailures.length > 1 ? 's' : ''}):\n`
+          errorMessage += otherFailures.map(r => `• ${r.fileName}: ${r.message}`).join('\n')
+        }
+        
+        console.log('Setting upload error:', errorMessage) // Debug log
+        setUploadError(errorMessage)
+        
+        // Keep the error visible - don't let it be cleared by refresh
+        setTimeout(() => {
+          console.log('Error should still be visible:', errorMessage)
+        }, 1000)
+      } else {
+        // Clear error if all uploads succeeded
+        setUploadError(null)
       }
     } catch (err: any) {
       console.error('Error during bulk upload:', err)
@@ -237,6 +367,15 @@ export default function CoursesPage() {
     }
     // Remove finally block that sets uploading to false
     // This allows consecutive uploads without waiting for the previous batch to complete
+  }
+
+  // Quiz selection handlers
+  const handleQuizSelection = (filePath: string, fileName: string, questionCount: number) => {
+    if (isQuizSelected(filePath)) {
+      removeQuizFile(filePath)
+    } else {
+      addQuizFile(filePath, fileName, questionCount)
+    }
   }
 
   return (
@@ -326,7 +465,7 @@ export default function CoursesPage() {
                     className="file-input"
                   />
                 </div>
-                <p className="upload-hint">Supported format: PDF (max 10MB each) • Select multiple files</p>
+                <p className="upload-hint">Supported format: PDF • Select multiple files</p>
               </>
             )}
           </div>
@@ -354,8 +493,21 @@ export default function CoursesPage() {
 
           {uploadError && (
             <div className="upload-message error">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: '500' }}>Upload Issues</strong>
+              </div>
               {uploadError.split('\n').map((line, index) => (
-                <div key={index}>{line}</div>
+                <div 
+                  key={index} 
+                  style={{ 
+                    marginLeft: line.startsWith('•') ? '1.5rem' : '0',
+                    marginTop: index > 0 ? '0.25rem' : '0',
+                    lineHeight: '1.5'
+                  }}
+                >
+                  {line}
+                </div>
               ))}
             </div>
           )}
@@ -434,6 +586,36 @@ export default function CoursesPage() {
                       {fileData.content.length > 500 ? '...' : ''}
                     </p>
                   </div>
+                  
+                  {/* Quiz section */}
+                  <div className="parsed-file-quiz">
+                    {fileData.quiz && fileData.quiz.length > 0 ? (
+                      <div className="quiz-available">
+                        <div className="quiz-info">
+                          <span className="quiz-icon">🧠</span>
+                          <span className="quiz-text">Quiz available: {fileData.quiz.length} questions</span>
+                        </div>
+                        <div className="quiz-actions">
+                          <button 
+                            className={`btn-quiz-select ${isQuizSelected(filePath) ? 'selected' : ''}`}
+                            onClick={() => handleQuizSelection(filePath, fileData.metadata.file_name, fileData.quiz?.length || 0)}
+                          >
+                            <span className="checkbox-icon">
+                              {isQuizSelected(filePath) ? '✓' : '☐'}
+                            </span>
+                            {isQuizSelected(filePath) ? 'Selected' : 'Select'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="quiz-unavailable">
+                        <div className="quiz-info">
+                          <span className="quiz-icon">❌</span>
+                          <span className="quiz-text">No quiz available</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -443,6 +625,12 @@ export default function CoursesPage() {
           </div>
           )}
         </div>
+        {selectedQuizFiles.length > 0 && (
+          <div className="quiz-start-section">
+            <p>{`Selected ${selectedQuizFiles.length} quiz${selectedQuizFiles.length > 1 ? 'zes' : ''} with ${totalQuestions} question${totalQuestions > 1 ? 's' : ''}`}</p>
+            <p className="quiz-instruction">Go to the dashboard to start your quiz!</p>
+          </div>
+        )}
       </div>
     </div>
   )

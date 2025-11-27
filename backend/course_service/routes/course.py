@@ -17,6 +17,84 @@ from llama_cloud_services import LlamaParse
 
 router = APIRouter()
 
+# Import quiz generation services
+from backend.quiz_service.services.question.generator import QuestionGenerator
+from backend.shared.services.llm.mistral_client import MistralClient
+from backend.course_service.models.course import CourseStructure, Topic, Subtopic, Concept
+from backend.quiz_service.models.question import DifficultyLevel
+
+
+async def generate_quiz_for_file(file_name: str, content: str, num_questions: int = 5) -> List[Dict[str, Any]]:
+    """Generate a quiz for a specific file content.
+    
+    Args:
+        file_name: Name of the file
+        content: File content
+        num_questions: Number of questions to generate
+        
+    Returns:
+        List of generated questions
+    """
+    try:
+        # Initialize question generator
+        mistral_client = MistralClient()
+        generator = QuestionGenerator(mistral_client)
+        
+        # Create a concept from the file content
+        topic_name = file_name.replace('.pdf', '').replace('_', ' ').title()
+        
+        # Use first 5000 chars for concept creation to avoid token limits
+        content_preview = content[:5000] if len(content) > 5000 else content
+        
+        concept = Concept(
+            name=topic_name,
+            description=f"Key concepts from {file_name}",
+            keywords=[]
+        )
+        
+        questions = []
+        difficulties = [DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD]
+
+        from backend.quiz_service.models.question import MultipleChoiceQuestion
+        questions:List[MultipleChoiceQuestion] = generator.generate_questions(
+            topic=topic_name,
+            subtopic="Main Content",
+            concept=concept,
+            difficulty=difficulties[0],
+            content_context=content_preview,
+            num_answers=4
+        )
+
+        formatted_questions:List[Dict[str, Any]] = []
+        for question in questions:
+            
+            # Convert to dict format for JSON storage
+            question_dict = {
+                "question_text": question.question_text,
+                "answers": [
+                    {
+                        "text": answer.text,
+                        "is_correct": answer.is_correct,
+                        "explanation": answer.explanation
+                    }
+                    for answer in question.answers
+                ],
+                "topic": question.topic,
+                "subtopic": question.subtopic,
+                "concepts": question.concepts,
+                "difficulty": question.difficulty.value,
+                "explanation": question.explanation
+            }
+            
+            formatted_questions.append(question_dict)
+            
+        return formatted_questions
+        
+    except Exception as e:
+        print(f"Error generating quiz for {file_name}: {str(e)}")
+        # Return empty quiz if generation fails
+        return []
+
 
 class ParsedFileMetadata(BaseModel):
     """Metadata for a parsed file."""
@@ -32,6 +110,7 @@ class ParsedFileData(BaseModel):
     """Data structure for a parsed file."""
     metadata: ParsedFileMetadata
     content: str
+    quiz: Optional[List[Dict[str, Any]]] = None  # Quiz questions for this file
 
 
 class ParsedDataResponse(BaseModel):
@@ -64,7 +143,8 @@ async def get_course():
         for file_path, file_data in parsed_data.items():
             files[file_path] = ParsedFileData(
                 metadata=ParsedFileMetadata(**file_data["metadata"]),
-                content=file_data["content"]
+                content=file_data["content"],
+                quiz=file_data.get("quiz")  # Include quiz data if present
             )
         
         return ParsedDataResponse(files=files)
@@ -81,13 +161,27 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
     file_content = await file.read()
-    if len(file_content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+    if len(file_content) > 100 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 100MB limit")
 
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY")
     if not LLAMA_CLOUD_API_KEY:
         raise HTTPException(status_code=500, detail="LLAMA_CLOUD_API_KEY environment variable not set")
 
+    # Check if file has already been processed (already exists in parsed_data.json)
+    parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
+    file_key = f"data/raw/{file.filename}"
+    
+    if parsed_data_file.exists():
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+        
+        if file_key in existing_data:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"This file has already been uploaded and processed. Please use a different filename or delete the existing file first."
+            )
+    
     # Save file temporarily
     original_file_name = file.filename # For saving later on
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
@@ -129,6 +223,18 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Modify the file name back to original for saving (and display)
         parsed_data["metadata"]["file_name"] = original_file_name
 
+        # Generate quiz for the uploaded file
+        print(f"Generating quiz for {original_file_name}...")
+        quiz_questions = await generate_quiz_for_file(
+            original_file_name,
+            parsed_data["content"],
+            num_questions=5
+        )
+        
+        # Add quiz to parsed data
+        parsed_data["quiz"] = quiz_questions
+        print(f"Generated {len(quiz_questions)} quiz questions for {original_file_name}")
+
         # Load existing parsed_data.json, update it, and save
         parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
         existing_data = {}
@@ -157,5 +263,55 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Clean up temporary file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+@router.post("/generate-quiz/{file_key:path}", response_model=UploadResponse)
+async def generate_quiz_for_existing_file(file_key: str, num_questions: int = 5):
+    """Generate or regenerate a quiz for an existing parsed file.
+    
+    Args:
+        file_key: Key of the file in parsed_data.json
+        num_questions: Number of questions to generate (default: 5)
+    """
+    try:
+        # Load existing parsed_data.json
+        parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
+        
+        if not parsed_data_file.exists():
+            raise HTTPException(status_code=404, detail="Parsed data file not found")
+        
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+        
+        if file_key not in existing_data:
+            raise HTTPException(status_code=404, detail=f"File {file_key} not found in parsed data")
+        
+        file_data = existing_data[file_key]
+        file_name = file_data["metadata"]["file_name"]
+        content = file_data["content"]
+        
+        # Generate new quiz
+        print(f"Regenerating quiz for {file_name}...")
+        quiz_questions = await generate_quiz_for_file(file_name, content, num_questions)
+        
+        # Update the quiz in the file data
+        existing_data[file_key]["quiz"] = quiz_questions
+        
+        # Save updated parsed_data.json
+        with open(parsed_data_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, indent=4)
+        
+        print(f"Successfully regenerated {len(quiz_questions)} quiz questions for {file_name}")
+        
+        return UploadResponse(
+            success=True,
+            message=f"Successfully generated {len(quiz_questions)} quiz questions for {file_name}",
+            data={"quiz": quiz_questions}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
 
 

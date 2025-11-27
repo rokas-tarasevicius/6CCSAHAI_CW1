@@ -96,3 +96,103 @@
 .btn-secondary:hover {
   opacity: 0.8;
 }
+
+/* Selected Quiz Info Styles */
+.selected-quiz-info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-20);
+  padding: var(--spacing-20);
+  margin: var(--spacing-30) auto;
+  max-width: 600px;
+  text-align: left;
+}
+
+.selected-quiz-info h3 {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-18);
+  color: var(--color-text-white);
+  margin: 0 0 var(--spacing-10) 0;
+  text-align: center;
+}
+
+.selected-quiz-info p {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-16);
+  color: var(--color-accent-blue);
+  margin: 0 0 var(--spacing-15) 0;
+  text-align: center;
+}
+
+.selected-files-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.selected-files-list li {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-14);
+  color: var(--color-text-primary);
+  padding: var(--spacing-5) var(--spacing-10);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-10);
+  margin-bottom: var(--spacing-5);
+}
+
+.selected-files-list li:last-child {
+  margin-bottom: 0;
+}
+
+.quiz-options {
+  margin-top: var(--spacing-20);
+  padding-top: var(--spacing-15);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.quiz-options label {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-16);
+  color: var(--color-text-white);
+  display: block;
+  margin-bottom: var(--spacing-10);
+}
+
+.question-limit-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-10);
+  padding: var(--spacing-10) var(--spacing-15);
+  font-family: var(--font-family);
+  font-size: var(--font-size-16);
+  color: var(--color-text-white);
+  width: 120px;
+  text-align: center;
+  margin: 0 auto var(--spacing-5);
+  display: block;
+}
+
+.question-limit-input:focus {
+  outline: none;
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.question-limit-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+.input-hint {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-12);
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-top: var(--spacing-5);
+}
