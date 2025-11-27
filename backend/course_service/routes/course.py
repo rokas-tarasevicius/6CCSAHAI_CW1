@@ -94,7 +94,37 @@ async def generate_quiz_for_file(file_name: str, content: str, num_questions: in
         print(f"Error generating quiz for {file_name}: {str(e)}")
         # Return empty quiz if generation fails
         return []
-
+    
+async def generate_pdf_summary_for_file(file_name:str, content:str) -> str:
+    """Generate a summary for a specific PDF file content.
+    
+    Args:
+        file_name: Name of the file
+        content: File content
+    Returns:
+        Generated summary string
+    """
+    try:
+        mistral_client = MistralClient()
+        
+        # Use first 3000 chars to avoid token limits
+        content_preview = content[:3000] if len(content) > 3000 else content
+        
+        prompt = (
+            f"Provide a concise summary (2-3 sentences) of the following PDF content from '{file_name}':\n\n"
+            f"{content_preview}\n\n"
+            "Summary:"
+        )
+        response = mistral_client.generate(
+            prompt=prompt,
+            system_message="You are an expert assistant that summarizes PDF documents effectively."
+        )
+        print(f"Generated summary for {file_name}: {response.strip()}")
+        
+        return response.strip()
+    except Exception as e:
+        print(f"Error generating summary for {file_name}: {str(e)}")
+        return "No summary available."
 
 class ParsedFileMetadata(BaseModel):
     """Metadata for a parsed file."""
@@ -234,6 +264,15 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Add quiz to parsed data
         parsed_data["quiz"] = quiz_questions
         print(f"Generated {len(quiz_questions)} quiz questions for {original_file_name}")
+
+
+        # Generate a summary of the file based on its content using LLM
+        pdf_summary = await generate_pdf_summary_for_file(
+            file_name=original_file_name,
+            content=parsed_data["content"]
+        )
+        parsed_data["summary"] = pdf_summary
+        print(f"Generated summary for {original_file_name}: {pdf_summary}")
 
         # Load existing parsed_data.json, update it, and save
         parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
