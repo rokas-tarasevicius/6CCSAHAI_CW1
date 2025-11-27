@@ -179,7 +179,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         if file_key in existing_data:
             raise HTTPException(
                 status_code=409, 
-                detail=f"File already exists in database"
+                detail=f"This file has already been uploaded and processed. Please use a different filename or delete the existing file first."
             )
     
     # Save file temporarily
