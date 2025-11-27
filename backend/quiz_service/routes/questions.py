@@ -91,6 +91,9 @@ async def start_file_based_quiz(request: FileQuizRequest):
                             is_correct=answer.get("is_correct", False),
                             explanation=answer.get("explanation", "")
                         ))
+
+                    # Shuffle the answer options so the correct answer isn't always first
+                    random.shuffle(answer_options)
                     
                     # Create QuestionResponse object
                     question_response = QuestionResponse(
