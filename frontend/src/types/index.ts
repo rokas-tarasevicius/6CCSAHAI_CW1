@@ -84,6 +84,7 @@ export interface ParsedFileMetadata {
 export interface ParsedFileData {
   metadata: ParsedFileMetadata
   content: string
+  summary?: string  // AI-generated summary of the file
   quiz?: QuizQuestion[]  // Quiz questions for this file
 }
 

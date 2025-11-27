@@ -581,10 +581,17 @@ export default function CoursesPage() {
                     </div>
                   </div>
                   <div className="parsed-file-content">
-                    <p className="content-preview">
-                      {fileData.content.substring(0, 500)}
-                      {fileData.content.length > 500 ? '...' : ''}
-                    </p>
+                    {fileData.summary ? (
+                      <div className="file-summary">
+                        <h4 className="summary-title">Summary</h4>
+                        <p className="content-preview">{fileData.summary}</p>
+                      </div>
+                    ) : (
+                      <p className="content-preview">
+                        {fileData.content.substring(0, 500)}
+                        {fileData.content.length > 500 ? '...' : ''}
+                      </p>
+                    )}
                   </div>
                   
                   {/* Quiz section */}
