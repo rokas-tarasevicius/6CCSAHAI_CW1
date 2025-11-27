@@ -137,19 +137,37 @@ export default function CoursesPage() {
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
-        // Check if adding these files would exceed the limit
-        const totalFiles = selectedFiles.length + files.length
-        if (totalFiles > 5) {
-          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${files.length} more.`)
+        // Filter out duplicate files based on name and size
+        const existingFileKeys = new Set(selectedFiles.map(f => `${f.name}-${f.size}`))
+        const newFiles = files.filter(file => {
+          const fileKey = `${file.name}-${file.size}`
+          return !existingFileKeys.has(fileKey)
+        })
+        
+        const duplicateCount = files.length - newFiles.length
+        if (duplicateCount > 0) {
+          setUploadError(`${duplicateCount} duplicate file(s) skipped. Files with the same name and size are already selected.`)
+        }
+        
+        if (newFiles.length === 0) {
           return
         }
         
-        console.log(`Adding ${files.length} files via drag & drop:`, files.map(f => f.name))
-        setSelectedFiles(prevFiles => [...prevFiles, ...files])
-        // Clear messages when new files are added
-        setUploadError(null)
-        setSuccess(null)
-        clearSuccessMessages()
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + newFiles.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${newFiles.length} more.`)
+          return
+        }
+        
+        console.log(`Adding ${newFiles.length} files via drag & drop:`, newFiles.map(f => f.name))
+        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles])
+        // Clear messages when new files are added (only if no duplicates were found)
+        if (duplicateCount === 0) {
+          setUploadError(null)
+          setSuccess(null)
+          clearSuccessMessages()
+        }
       }
     }
   }
@@ -159,20 +177,39 @@ export default function CoursesPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
-        // Check if adding these files would exceed the limit
-        const totalFiles = selectedFiles.length + files.length
-        if (totalFiles > 5) {
-          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${files.length} more.`)
+        // Filter out duplicate files based on name and size
+        const existingFileKeys = new Set(selectedFiles.map(f => `${f.name}-${f.size}`))
+        const newFiles = files.filter(file => {
+          const fileKey = `${file.name}-${file.size}`
+          return !existingFileKeys.has(fileKey)
+        })
+        
+        const duplicateCount = files.length - newFiles.length
+        if (duplicateCount > 0) {
+          setUploadError(`${duplicateCount} duplicate file(s) skipped. Files with the same name and size are already selected.`)
+        }
+        
+        if (newFiles.length === 0) {
           e.target.value = ''
           return
         }
         
-        console.log(`Adding ${files.length} files via file input:`, files.map(f => f.name))
-        setSelectedFiles(prevFiles => [...prevFiles, ...files])
-        // Clear messages when new files are added
-        setUploadError(null)
-        setSuccess(null)
-        clearSuccessMessages()
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + newFiles.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${newFiles.length} more.`)
+          e.target.value = ''
+          return
+        }
+        
+        console.log(`Adding ${newFiles.length} files via file input:`, newFiles.map(f => f.name))
+        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles])
+        // Clear messages when new files are added (only if no duplicates were found)
+        if (duplicateCount === 0) {
+          setUploadError(null)
+          setSuccess(null)
+          clearSuccessMessages()
+        }
       }
     }
     // Reset the input value so the same files can be selected again
