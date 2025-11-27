@@ -168,6 +168,20 @@ async def upload_pdf(file: UploadFile = File(...)):
     if not LLAMA_CLOUD_API_KEY:
         raise HTTPException(status_code=500, detail="LLAMA_CLOUD_API_KEY environment variable not set")
 
+    # Check if file has already been processed (already exists in parsed_data.json)
+    parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
+    file_key = f"data/raw/{file.filename}"
+    
+    if parsed_data_file.exists():
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+        
+        if file_key in existing_data:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"File already exists in database"
+            )
+    
     # Save file temporarily
     original_file_name = file.filename # For saving later on
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
