@@ -492,17 +492,20 @@ export default function CoursesPage() {
           )}
 
           {uploadError && (
-            <div className="upload-message error" style={{ 
-              backgroundColor: '#fee', 
-              border: '2px solid #f00', 
-              padding: '1rem', 
-              marginTop: '1rem',
-              borderRadius: '4px',
-              whiteSpace: 'pre-line'
-            }}>
-              <strong style={{ color: '#d00' }}>Upload Errors:</strong>
+            <div className="upload-message error">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: '500' }}>Upload Issues</strong>
+              </div>
               {uploadError.split('\n').map((line, index) => (
-                <div key={index} style={{ color: '#333', marginTop: index > 0 ? '0.25rem' : '0.5rem' }}>
+                <div 
+                  key={index} 
+                  style={{ 
+                    marginLeft: line.startsWith('•') ? '1.5rem' : '0',
+                    marginTop: index > 0 ? '0.25rem' : '0',
+                    lineHeight: '1.5'
+                  }}
+                >
                   {line}
                 </div>
               ))}

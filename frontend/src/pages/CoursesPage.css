@@ -477,9 +477,12 @@
 }
 
 .upload-message.error {
-  background: rgba(239, 68, 68, 0.1);
-  border: var(--border-width) solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.12) 100%);
+  border: var(--border-width) solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: var(--spacing-20) var(--spacing-25);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  animation: slideInFromTop 0.3s ease-out;
 }
 
 /* Individual Success Messages */
