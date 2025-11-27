@@ -55,6 +55,7 @@ export default function QuestionCard({
               onClick={() => onAnswerSelect(index)}
               disabled={isAnswered}
             >
+              <span className="mcq-label">{String.fromCharCode(65 + index)}.</span>
               <span className="mcq-text">{answer.text}</span>
             </button>
           )
