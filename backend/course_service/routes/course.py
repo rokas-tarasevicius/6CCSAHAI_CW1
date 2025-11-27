@@ -161,8 +161,8 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
     file_content = await file.read()
-    if len(file_content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+    if len(file_content) > 100 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 100MB limit")
 
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY")
     if not LLAMA_CLOUD_API_KEY:

@@ -339,7 +339,7 @@ export default function CoursesPage() {
                     className="file-input"
                   />
                 </div>
-                <p className="upload-hint">Supported format: PDF (max 10MB each) • Select multiple files</p>
+                <p className="upload-hint">Supported format: PDF • Select multiple files</p>
               </>
             )}
           </div>
