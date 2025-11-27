@@ -137,6 +137,13 @@ export default function CoursesPage() {
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + files.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${files.length} more.`)
+          return
+        }
+        
         console.log(`Adding ${files.length} files via drag & drop:`, files.map(f => f.name))
         setSelectedFiles(prevFiles => [...prevFiles, ...files])
         // Clear messages when new files are added
@@ -152,6 +159,14 @@ export default function CoursesPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files).filter(file => file.type === 'application/pdf')
       if (files.length > 0) {
+        // Check if adding these files would exceed the limit
+        const totalFiles = selectedFiles.length + files.length
+        if (totalFiles > 5) {
+          setUploadError(`Cannot upload more than 5 files at once. You have selected ${selectedFiles.length} files and tried to add ${files.length} more.`)
+          e.target.value = ''
+          return
+        }
+        
         console.log(`Adding ${files.length} files via file input:`, files.map(f => f.name))
         setSelectedFiles(prevFiles => [...prevFiles, ...files])
         // Clear messages when new files are added
