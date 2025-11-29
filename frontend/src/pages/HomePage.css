@@ -57,7 +57,8 @@
 
 .btn-primary {
   display: inline-block;
-  width: 206px;
+  min-width: 206px;
+  max-width: 100%;
   border: var(--border-width) solid var(--color-border-blue);
   border-radius: var(--radius-50);
   background: transparent;
@@ -70,6 +71,10 @@
   text-decoration: none;
   text-align: center;
   transition: opacity 0.2s;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .btn-primary:hover {
@@ -78,7 +83,8 @@
 
 .btn-secondary {
   display: inline-block;
-  width: 206px;
+  min-width: 206px;
+  max-width: 100%;
   border: var(--border-width) solid var(--color-border-dark);
   border-radius: var(--radius-50);
   background: transparent;
@@ -91,6 +97,10 @@
   text-decoration: none;
   text-align: center;
   transition: opacity 0.2s;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .btn-secondary:hover {
@@ -102,45 +112,172 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-20);
-  padding: var(--spacing-20);
-  margin: var(--spacing-30) auto;
-  max-width: 600px;
+  padding: var(--spacing-30);
+  margin: var(--spacing-40) auto;
+  max-width: 700px;
   text-align: left;
 }
 
 .selected-quiz-info h3 {
   font-family: var(--font-family);
   font-weight: var(--font-weight-regular);
-  font-size: var(--font-size-18);
+  font-size: var(--font-size-24);
   color: var(--color-text-white);
-  margin: 0 0 var(--spacing-10) 0;
+  margin: 0 0 var(--spacing-15) 0;
   text-align: center;
 }
 
 .selected-quiz-info p {
   font-family: var(--font-family);
   font-weight: var(--font-weight-light);
-  font-size: var(--font-size-16);
+  font-size: var(--font-size-18);
   color: var(--color-accent-blue);
-  margin: 0 0 var(--spacing-15) 0;
+  margin: 0 0 var(--spacing-20) 0;
   text-align: center;
+}
+
+.selected-files-actions {
+  display: flex;
+  gap: var(--spacing-12);
+  justify-content: center;
+  margin-bottom: var(--spacing-20);
+  padding-bottom: var(--spacing-15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-select-all-small,
+.btn-deselect-all-small {
+  border: var(--border-width) solid var(--color-border-blue);
+  border-radius: var(--radius-20);
+  background: transparent;
+  padding: var(--spacing-10) var(--spacing-20);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-16);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+
+.btn-select-all-small:hover,
+.btn-deselect-all-small:hover {
+  opacity: 0.8;
+  background: rgba(27, 144, 222, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-deselect-all-small {
+  border-color: var(--color-border-dark);
+}
+
+.btn-deselect-all-small:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .selected-files-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 var(--spacing-25) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: var(--spacing-8);
+  padding-top: var(--spacing-5);
+}
+
+.selected-files-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.selected-files-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.selected-files-list::-webkit-scrollbar-thumb {
+  background: var(--color-border-blue);
+  border-radius: 3px;
+}
+
+.selected-files-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-blue);
 }
 
 .selected-files-list li {
   font-family: var(--font-family);
   font-weight: var(--font-weight-light);
-  font-size: var(--font-size-14);
+  font-size: var(--font-size-16);
   color: var(--color-text-primary);
-  padding: var(--spacing-5) var(--spacing-10);
+  padding: var(--spacing-15) var(--spacing-20);
   background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-10);
-  margin-bottom: var(--spacing-5);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-15);
+  transition: all 0.15s ease;
+}
+
+.selected-files-list li:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.selected-files-list li.selected {
+  background: rgba(27, 144, 222, 0.12);
+  border-color: var(--color-border-blue);
+}
+
+.selected-files-list li.selected:hover {
+  background: rgba(27, 144, 222, 0.18);
+}
+
+.selected-files-list li .file-name-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-file-toggle {
+  background: transparent;
+  border: var(--border-width) solid var(--color-border-dark);
+  border-radius: var(--radius-10);
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-18);
+  color: var(--color-text-primary);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-file-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border-blue);
+  transform: scale(1.05);
+}
+
+.selected-files-list li.selected .btn-file-toggle {
+  border-color: var(--color-border-blue);
+  background: rgba(27, 144, 222, 0.2);
+  color: var(--color-accent-blue);
+}
+
+.selected-files-list li.selected .btn-file-toggle:hover {
+  background: rgba(27, 144, 222, 0.3);
 }
 
 .selected-files-list li:last-child {
@@ -148,8 +285,8 @@
 }
 
 .quiz-options {
-  margin-top: var(--spacing-20);
-  padding-top: var(--spacing-15);
+  margin-top: var(--spacing-25);
+  padding-top: var(--spacing-20);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
 }
@@ -160,7 +297,7 @@
   font-size: var(--font-size-16);
   color: var(--color-text-white);
   display: block;
-  margin-bottom: var(--spacing-10);
+  margin-bottom: var(--spacing-12);
 }
 
 .question-limit-input {
@@ -173,14 +310,16 @@
   color: var(--color-text-white);
   width: 120px;
   text-align: center;
-  margin: 0 auto var(--spacing-5);
+  margin: 0 auto var(--spacing-8);
   display: block;
+  transition: all 0.15s ease;
 }
 
 .question-limit-input:focus {
   outline: none;
   border-color: var(--color-accent-blue);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .question-limit-input::placeholder {
@@ -194,5 +333,5 @@
   font-size: var(--font-size-12);
   color: rgba(255, 255, 255, 0.5);
   display: block;
-  margin-top: var(--spacing-5);
+  margin-top: var(--spacing-8);
 }

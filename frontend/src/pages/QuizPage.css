@@ -28,7 +28,8 @@
   position: absolute;
   right: 0;
   top: 3px;
-  width: 206px;
+  min-width: 206px;
+  max-width: 100%;
   border: var(--border-width) solid var(--color-border-blue);
   border-radius: var(--radius-50);
   background: transparent;
@@ -38,8 +39,12 @@
   font-weight: var(--font-weight-light);
   font-size: var(--font-size-21);
   color: var(--color-text-primary);
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   transition: opacity 0.15s ease;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .btn-ai-slop:hover,
@@ -163,7 +168,7 @@
   width: 100%;
   height: 12px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: var(--radius-10);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
@@ -173,7 +178,7 @@
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-border-blue), var(--color-border-success));
-  border-radius: 5px;
+  border-radius: var(--radius-10);
   transition: width 0.5s ease-in-out;
   min-width: 0;
   max-width: 100%;

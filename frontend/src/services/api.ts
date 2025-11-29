@@ -33,6 +33,11 @@ export const courseApi = {
     const response = await api.post(`/course/generate-quiz/${encodeURIComponent(fileKey)}?num_questions=${numQuestions}`)
     return response.data
   },
+  
+  deleteCourse: async (fileKey: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/course/${encodeURIComponent(fileKey)}`)
+    return response.data
+  },
 }
 
 export const questionsApi = {

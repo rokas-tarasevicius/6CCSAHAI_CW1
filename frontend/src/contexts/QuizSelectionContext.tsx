@@ -12,6 +12,8 @@ interface QuizSelectionContextType {
   addQuizFile: (filePath: string, fileName: string, questionCount: number) => void
   removeQuizFile: (filePath: string) => void
   clearQuizSelection: () => void
+  selectAllQuizFiles: (files: Array<{ filePath: string; fileName: string; questionCount: number }>) => void
+  deselectAllQuizFiles: () => void
   isQuizSelected: (filePath: string) => boolean
   getSelectedFilePaths: () => string[]
 }
@@ -39,6 +41,14 @@ export const QuizSelectionProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedQuizFiles([])
   }, [])
 
+  const selectAllQuizFiles = useCallback((files: Array<{ filePath: string; fileName: string; questionCount: number }>) => {
+    setSelectedQuizFiles(files)
+  }, [])
+
+  const deselectAllQuizFiles = useCallback(() => {
+    setSelectedQuizFiles([])
+  }, [])
+
   const isQuizSelected = useCallback((filePath: string) => {
     return selectedQuizFiles.some(file => file.filePath === filePath)
   }, [selectedQuizFiles])
@@ -55,6 +65,8 @@ export const QuizSelectionProvider: React.FC<{ children: React.ReactNode }> = ({
     addQuizFile,
     removeQuizFile,
     clearQuizSelection,
+    selectAllQuizFiles,
+    deselectAllQuizFiles,
     isQuizSelected,
     getSelectedFilePaths
   }

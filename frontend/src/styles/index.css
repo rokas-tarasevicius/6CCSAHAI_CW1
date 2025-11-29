@@ -13,6 +13,12 @@
   --color-border-error: #ff0004;
   --color-border-success: #1eff00;
   
+  /* Accent Colors */
+  --color-accent-blue: #3b82f6;
+  --color-accent-yellow: #fbbf24;
+  --color-accent-green: #10b981;
+  --color-text-blue: #1b90de;
+  
   --color-shadow: rgba(227, 242, 252, 0.25);
   
   /* Typography - Space Grotesk */

@@ -84,7 +84,8 @@
 
 .btn-submit {
   margin-top: var(--spacing-20);
-  width: 206px;
+  min-width: 206px;
+  max-width: 100%;
   border: var(--border-width) solid var(--color-border-blue);
   border-radius: var(--radius-50);
   background: transparent;
@@ -95,6 +96,11 @@
   font-size: var(--font-size-21);
   color: var(--color-text-primary);
   transition: opacity 0.15s ease, box-shadow 0.3s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .btn-submit:hover:not(:disabled) {

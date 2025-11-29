@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { questionsApi } from '../services/api'
 import type { Question } from '../types'
@@ -58,7 +58,7 @@ export default function QuizPage() {
     }
   }
 
-  const loadNextFileBasedQuestion = () => {
+  const loadNextFileBasedQuestion = useCallback(() => {
     const nextIndex = currentQuestionIndex + 1
     if (nextIndex < allQuestions.length) {
       setCurrentQuestionIndex(nextIndex)
@@ -70,7 +70,7 @@ export default function QuizPage() {
       setQuestion(null)
       setHasContent(null) // This will trigger a completion screen
     }
-  }
+  }, [currentQuestionIndex, allQuestions])
 
   const handleAnswerSelect = (index: number) => {
     if (!isAnswered) {
@@ -83,7 +83,7 @@ export default function QuizPage() {
     setIsAnswered(true)
   }
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     // Check if this is the last question
     const isLastQuestion = currentQuestionIndex >= allQuestions.length - 1
     
@@ -94,7 +94,20 @@ export default function QuizPage() {
       // Load next question
       loadNextFileBasedQuestion()
     }
-  }
+  }, [currentQuestionIndex, allQuestions.length, navigate, loadNextFileBasedQuestion])
+
+  // Auto-advance to next question after 3 seconds when answered
+  useEffect(() => {
+    if (isAnswered && question) {
+      const timer = setTimeout(() => {
+        handleNext()
+      }, 3000) // 3 seconds
+
+      return () => {
+        clearTimeout(timer)
+      }
+    }
+  }, [isAnswered, question, handleNext])
 
   // Check if content exists first
   if (hasContent === false) {

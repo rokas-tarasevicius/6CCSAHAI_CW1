@@ -2,14 +2,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useQuizSelection } from '../contexts/QuizSelectionContext'
 import { courseApi } from '../services/api'
+import type { ParsedDataResponse } from '../types'
 import './HomePage.css'
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { selectedQuizFiles, totalQuestions, getSelectedFilePaths } = useQuizSelection()
+  const { selectedQuizFiles, totalQuestions, getSelectedFilePaths, addQuizFile, removeQuizFile, isQuizSelected, selectAllQuizFiles, deselectAllQuizFiles } = useQuizSelection()
   const [hasContent, setHasContent] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
   const [maxQuestions, setMaxQuestions] = useState<number | ''>('')
+  const [parsedData, setParsedData] = useState<ParsedDataResponse | null>(null)
 
   useEffect(() => {
     checkForContent()
@@ -21,11 +23,36 @@ export default function HomePage() {
       const data = await courseApi.getCourse()
       const hasFiles = data.files && Object.keys(data.files).length > 0
       setHasContent(hasFiles)
+      setParsedData(data)
     } catch (err: any) {
       setHasContent(false)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleFileToggle = (filePath: string, fileName: string, questionCount: number) => {
+    if (isQuizSelected(filePath)) {
+      removeQuizFile(filePath)
+    } else {
+      addQuizFile(filePath, fileName, questionCount)
+    }
+  }
+
+  const handleSelectAll = () => {
+    if (!parsedData) return
+    const filesWithQuiz = Object.entries(parsedData.files)
+      .filter(([_, fileData]) => fileData.quiz && fileData.quiz.length > 0)
+      .map(([filePath, fileData]) => ({
+        filePath,
+        fileName: fileData.metadata.file_name,
+        questionCount: fileData.quiz?.length || 0
+      }))
+    selectAllQuizFiles(filesWithQuiz)
+  }
+
+  const handleDeselectAll = () => {
+    deselectAllQuizFiles()
   }
 
   const handleStartQuiz = () => {
@@ -74,16 +101,46 @@ export default function HomePage() {
           <h2>Welcome to the File-Based Quiz Platform</h2>
           <p>Your course materials are ready! Start your quiz now.</p>
           
-          {selectedQuizFiles.length > 0 && (
+          {parsedData && Object.keys(parsedData.files).length > 0 && (
             <div className="selected-quiz-info">
               <h3>Selected Quiz Files</h3>
               <p>{`${selectedQuizFiles.length} file${selectedQuizFiles.length > 1 ? 's' : ''} selected with ${totalQuestions} question${totalQuestions > 1 ? 's' : ''}`}</p>
+              
+              <div className="selected-files-actions">
+                <button 
+                  className="btn-select-all-small"
+                  onClick={handleSelectAll}
+                >
+                  Select All
+                </button>
+                <button 
+                  className="btn-deselect-all-small"
+                  onClick={handleDeselectAll}
+                >
+                  Deselect All
+                </button>
+              </div>
+
               <ul className="selected-files-list">
-                {selectedQuizFiles.map((file) => (
-                  <li key={file.filePath}>
-                    {file.fileName} ({file.questionCount} questions)
-                  </li>
-                ))}
+                {Object.entries(parsedData.files)
+                  .filter(([_, fileData]) => fileData.quiz && fileData.quiz.length > 0)
+                  .map(([filePath, fileData]) => {
+                    const isSelected = isQuizSelected(filePath)
+                    return (
+                      <li key={filePath} className={isSelected ? 'selected' : ''}>
+                        <span className="file-name-text">
+                          {fileData.metadata.file_name} ({fileData.quiz?.length || 0} questions)
+                        </span>
+                        <button
+                          className="btn-file-toggle"
+                          onClick={() => handleFileToggle(filePath, fileData.metadata.file_name, fileData.quiz?.length || 0)}
+                          title={isSelected ? 'Deselect' : 'Select'}
+                        >
+                          {isSelected ? '✓' : '☐'}
+                        </button>
+                      </li>
+                    )
+                  })}
               </ul>
               
               <div className="quiz-options">

@@ -15,12 +15,13 @@ export default function CoursesPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [_, setRefreshing] = useState(false)
   const [refreshTimeout, setRefreshTimeout] = useState<number | null>(null)
+  const [visibleSummaries, setVisibleSummaries] = useState<Set<string>>(new Set())
   
   // Use global upload context for persistent upload tracking and success messages
   const { uploads, successMessages, startUpload, updateUpload, finishUpload, addSuccessMessage, clearSuccessMessages } = useUpload()
   
   // Use global quiz selection context for persisting quiz selections
-  const { selectedQuizFiles, totalQuestions, addQuizFile, removeQuizFile, isQuizSelected } = useQuizSelection()
+  const { selectedQuizFiles, totalQuestions, addQuizFile, removeQuizFile, isQuizSelected, selectAllQuizFiles, deselectAllQuizFiles } = useQuizSelection()
 
   useEffect(() => {
     loadCourse()
@@ -243,13 +244,10 @@ export default function CoursesPage() {
     // Track failed uploads as they happen
     const failedUploads: Array<{ success: boolean; fileName: string; message: string; isDuplicate: boolean }> = []
     
-    // Process files individually so we can refresh after each successful upload
+    // Process files in parallel for faster uploads
     const uploadPromises = filesToUpload.map(async (file, index) => {
       // Use index to ensure unique IDs even when files are uploaded simultaneously
       const uploadId = `upload-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
-      
-      // Small delay to stagger uploads (helps with UI updates)
-      await new Promise(resolve => setTimeout(resolve, index * 50))
       
       // Start global upload tracking
       startUpload(uploadId, file.name)
@@ -376,6 +374,63 @@ export default function CoursesPage() {
     } else {
       addQuizFile(filePath, fileName, questionCount)
     }
+  }
+
+  const handleSelectAll = () => {
+    if (!parsedData) return
+    const filesWithQuiz = Object.entries(parsedData.files)
+      .filter(([_, fileData]) => fileData.quiz && fileData.quiz.length > 0)
+      .map(([filePath, fileData]) => ({
+        filePath,
+        fileName: fileData.metadata.file_name,
+        questionCount: fileData.quiz?.length || 0
+      }))
+    selectAllQuizFiles(filesWithQuiz)
+  }
+
+  const handleDeselectAll = () => {
+    deselectAllQuizFiles()
+  }
+
+  const handleDeleteCourse = async (filePath: string, fileName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const result = await courseApi.deleteCourse(filePath)
+      if (result.success) {
+        // Remove from quiz selection if selected
+        if (isQuizSelected(filePath)) {
+          removeQuizFile(filePath)
+        }
+        // Remove from visible summaries if visible
+        setVisibleSummaries(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(filePath)
+          return newSet
+        })
+        // Refresh the course list
+        await loadCourse()
+        setSuccess(`Successfully deleted ${fileName}`)
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to delete course'
+      setUploadError(errorMessage)
+      console.error('Error deleting course:', errorMessage)
+    }
+  }
+
+  const toggleSummary = (filePath: string) => {
+    setVisibleSummaries(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(filePath)) {
+        newSet.delete(filePath)
+      } else {
+        newSet.add(filePath)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -537,6 +592,26 @@ export default function CoursesPage() {
         <div className="courses-list">
           <div className="courses-header">
             <h2 className="section-title">Your Courses</h2>
+            {parsedData && Object.keys(parsedData.files).length > 0 && (
+              <div className="courses-header-actions">
+                {Object.values(parsedData.files).some(file => file.quiz && file.quiz.length > 0) && (
+                  <>
+                    <button 
+                      className="btn-select-all"
+                      onClick={handleSelectAll}
+                    >
+                      Select All
+                    </button>
+                    <button 
+                      className="btn-deselect-all"
+                      onClick={handleDeselectAll}
+                    >
+                      Deselect All
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Active Upload Progress - show at top of courses list */}
@@ -571,7 +646,16 @@ export default function CoursesPage() {
               {Object.entries(parsedData.files).map(([filePath, fileData]) => (
                 <div key={filePath} className="parsed-file-card">
                   <div className="parsed-file-header">
-                    <h3 className="parsed-file-title">{fileData.metadata.file_name}</h3>
+                    <div className="parsed-file-title-row">
+                      <h3 className="parsed-file-title">{fileData.metadata.file_name}</h3>
+                      <button
+                        className="btn-delete-course"
+                        onClick={() => handleDeleteCourse(filePath, fileData.metadata.file_name)}
+                        title={`Delete ${fileData.metadata.file_name}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
                     <div className="parsed-file-meta">
                       <span className="meta-item">Type: {fileData.metadata.file_type.toUpperCase()}</span>
                       <span className="meta-item">Size: {(fileData.metadata.content_length / 1024).toFixed(2)} KB</span>
@@ -583,8 +667,19 @@ export default function CoursesPage() {
                   <div className="parsed-file-content">
                     {fileData.summary ? (
                       <div className="file-summary">
-                        <h4 className="summary-title">Summary</h4>
-                        <p className="content-preview">{fileData.summary}</p>
+                        <div className="summary-header">
+                          <h4 className="summary-title">Summary</h4>
+                          <button
+                            className="btn-toggle-summary"
+                            onClick={() => toggleSummary(filePath)}
+                            title={visibleSummaries.has(filePath) ? 'Show summary' : 'Hide summary'}
+                          >
+                            {visibleSummaries.has(filePath) ? '▶' : '▼'}
+                          </button>
+                        </div>
+                        {!visibleSummaries.has(filePath) && (
+                          <p className="content-preview">{fileData.summary}</p>
+                        )}
                       </div>
                     ) : (
                       <p className="content-preview">

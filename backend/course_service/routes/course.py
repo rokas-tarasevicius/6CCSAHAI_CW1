@@ -24,6 +24,9 @@ from backend.course_service.models.course import CourseStructure, Topic, Subtopi
 from backend.quiz_service.models.question import DifficultyLevel
 from backend.shared.services.llm.pdf_summary import PDF_SUMMARY_SYSTEM_INSTRUCTION
 
+# Lock for JSON file operations to prevent race conditions
+_json_file_lock = asyncio.Lock()
+
 
 async def generate_quiz_for_file(file_name: str, content: str, num_questions: int = 5) -> List[Dict[str, Any]]:
     """Generate a quiz for a specific file content.
@@ -200,15 +203,19 @@ async def upload_pdf(file: UploadFile = File(...)):
     parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
     file_key = f"data/raw/{file.filename}"
     
-    if parsed_data_file.exists():
-        with open(parsed_data_file, 'r', encoding='utf-8') as f:
-            existing_data = json.load(f)
-        
-        if file_key in existing_data:
-            raise HTTPException(
-                status_code=409, 
-                detail=f"This file has already been uploaded and processed. Please use a different filename or delete the existing file first."
-            )
+    async with _json_file_lock:
+        if parsed_data_file.exists():
+            # Use asyncio.to_thread to make file I/O non-blocking
+            def read_json_file():
+                with open(parsed_data_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            existing_data = await asyncio.to_thread(read_json_file)
+            
+            if file_key in existing_data:
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"This file has already been uploaded and processed. Please use a different filename or delete the existing file first."
+                )
     
     # Save file temporarily
     original_file_name = file.filename # For saving later on
@@ -251,47 +258,58 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Modify the file name back to original for saving (and display)
         parsed_data["metadata"]["file_name"] = original_file_name
 
-        # Generate quiz for the uploaded file
-        print(f"Generating quiz for {original_file_name}...")
-        quiz_questions = await generate_quiz_for_file(
-            original_file_name,
-            parsed_data["content"],
-            num_questions=5
-        )
-        
-        # Add quiz to parsed data
-        parsed_data["quiz"] = quiz_questions
-        print(f"Generated {len(quiz_questions)} quiz questions for {original_file_name}")
-
-
-        # Generate a summary of the file based on its content using LLM
+        # Generate quiz and summary in parallel for faster processing
+        print(f"Generating quiz and summary for {original_file_name}...")
         pdf_summary_prompt_data = {
             "file_name": original_file_name,
             "raw_text": parsed_data["content"],
             "topic": "", # TODO: Need to somehow generate a topic
             "subtopic": "" # TODO: Need to somehow generate a subtopic
         }
-        pdf_summary = await generate_pdf_summary_for_file(
+        
+        # Run quiz and summary generation in parallel
+        quiz_task = generate_quiz_for_file(
+            original_file_name,
+            parsed_data["content"],
+            num_questions=5
+        )
+        summary_task = generate_pdf_summary_for_file(
             file_name=original_file_name,
             prompt_data=pdf_summary_prompt_data,
         )
+        
+        # Wait for both to complete in parallel
+        quiz_questions, pdf_summary = await asyncio.gather(quiz_task, summary_task)
+        
+        # Add quiz and summary to parsed data
+        parsed_data["quiz"] = quiz_questions
         parsed_data["summary"] = pdf_summary
-        print(f"Generated summary for {original_file_name}: {pdf_summary}")
+        print(f"Generated {len(quiz_questions)} quiz questions and summary for {original_file_name}")
 
-        # Load existing parsed_data.json, update it, and save
-        parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
-        existing_data = {}
-        if parsed_data_file.exists():
-            with open(parsed_data_file, 'r', encoding='utf-8') as f:
-                existing_data = json.load(f)
+        # Use lock to safely write to JSON file (prevents race conditions with parallel uploads)
+        async with _json_file_lock:
+            # Load existing parsed_data.json
+            parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
+            
+            def read_json_file():
+                if parsed_data_file.exists():
+                    with open(parsed_data_file, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+                return {}
+            
+            def write_json_file(data):
+                with open(parsed_data_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4)
+            
+            # Load existing data (non-blocking)
+            existing_data = await asyncio.to_thread(read_json_file)
 
-        # Add the new parsed file (use relative path as key)
-        file_key = f"data/raw/{file.filename}"
-        existing_data[file_key] = parsed_data
+            # Add the new parsed file (use relative path as key)
+            file_key = f"data/raw/{file.filename}"
+            existing_data[file_key] = parsed_data
 
-        # Save updated parsed_data.json
-        with open(parsed_data_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_data, f, indent=4)
+            # Save updated parsed_data.json (non-blocking)
+            await asyncio.to_thread(write_json_file, existing_data)
 
         return UploadResponse(
             success=True,
@@ -356,5 +374,49 @@ async def generate_quiz_for_existing_file(file_key: str, num_questions: int = 5)
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
+
+
+@router.delete("/{file_key:path}", response_model=UploadResponse)
+async def delete_course(file_key: str):
+    """Delete a course file from parsed_data.json.
+    
+    Args:
+        file_key: Key of the file in parsed_data.json (e.g., "data/raw/filename.pdf")
+    """
+    try:
+        # Load existing parsed_data.json
+        parsed_data_file = BACKEND_ROOT / "course_service" / "data" / "parsed_data.json"
+        
+        if not parsed_data_file.exists():
+            raise HTTPException(status_code=404, detail="Parsed data file not found")
+        
+        with open(parsed_data_file, 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+        
+        if file_key not in existing_data:
+            raise HTTPException(status_code=404, detail=f"File {file_key} not found in parsed data")
+        
+        # Get file name for response message
+        file_name = existing_data[file_key]["metadata"]["file_name"]
+        
+        # Remove the file from the data
+        del existing_data[file_key]
+        
+        # Save updated parsed_data.json
+        with open(parsed_data_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, indent=4)
+        
+        print(f"Successfully deleted {file_name} from parsed data")
+        
+        return UploadResponse(
+            success=True,
+            message=f"Successfully deleted {file_name}",
+            data=None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete course: {str(e)}")
 
 
