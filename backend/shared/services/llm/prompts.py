@@ -79,7 +79,7 @@ Keep your response focused and educational."""),
 
 
 # Video Script Generation Prompt
-VIDEO_SCRIPT_PROMPT = PromptTemplate.from_template("""You are creating a short educational video script (60-90 seconds when spoken).
+VIDEO_SCRIPT_PROMPT = PromptTemplate.from_template("""You are creating an educational video script that should be exactly 30 seconds when spoken aloud (roughly 75 words at 150 words per minute).
 
 Topic: {topic}
 Subtopic: {subtopic}
@@ -87,13 +87,13 @@ Concept: {concept_name}
 Description: {concept_description}
 
 The student is struggling with this concept. Create an engaging, clear script that:
-1. Introduces the concept in simple terms
-2. Provides a concrete example or analogy
-3. Explains why it matters
-4. Ends with a key takeaway
+1. Introduces the concept in simple terms (8-10 seconds)
+2. Provides a concrete example or analogy (10-12 seconds)
+3. Explains why it matters (8-10 seconds)
 
-Write the script in a conversational, engaging tone. Keep it concise and focused.
-The script should be spoken aloud, so write naturally.
+IMPORTANT: The script MUST be exactly 30 seconds when spoken. Aim for approximately 70-80 words total (no more than 80 words).
+Write the script in a conversational, engaging tone. Be concise but complete - every word counts.
+The script should be spoken aloud, so write naturally with complete sentences.
 
 Return only the script text, no additional formatting or metadata.""")
 

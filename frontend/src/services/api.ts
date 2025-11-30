@@ -97,30 +97,30 @@ export const questionsApi = {
 }
 
 export const videosApi = {
-  getRecommendations: async (
-    maxVideos: number = 5
-  ): Promise<VideoRecommendation[]> => {
-    const response = await api.post<{ recommendations: VideoRecommendation[] }>(
-      '/videos/recommendations',
-      {
-        max_videos: maxVideos,
-      }
-    )
-    return response.data.recommendations
-  },
-  
-  generateContent: async (
+  generateVideo: async (
     topic: string,
     subtopic: string,
-    concept: string,
-    relevanceScore: number = 1.0
+    concept: {
+      name: string
+      description: string
+      keywords: string[]
+    }
   ): Promise<VideoContent> => {
     const response = await api.post<VideoContent>('/videos/generate', {
       topic,
       subtopic,
       concept,
-      relevance_score: relevanceScore,
     })
+    return response.data
+  },
+  
+  generateRandomVideo: async (): Promise<VideoContent> => {
+    const response = await api.post<VideoContent>('/videos/generate-random')
+    return response.data
+  },
+  
+  getCachedVideos: async (): Promise<VideoContent[]> => {
+    const response = await api.get<VideoContent[]>('/videos/cached')
     return response.data
   },
 }

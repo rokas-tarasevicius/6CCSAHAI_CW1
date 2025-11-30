@@ -22,6 +22,8 @@ class Config:
     # Custom voice ID (optional) - if set, will try this first, fallback to default
     ELEVENLABS_CUSTOM_VOICE_ID = os.getenv("ELEVENLABS_CUSTOM_VOICE_ID", "")
     ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Default voice (fallback)
+    # TTS Model: eleven_turbo_v2 (cheapest/fastest), eleven_multilingual_v2, or eleven_monolingual_v1
+    ELEVENLABS_MODEL_ID = os.getenv("ELEVENLABS_MODEL_ID", "eleven_turbo_v2")
     
     # Video Generation
     VIDEO_WIDTH = 1280
