@@ -107,7 +107,7 @@ class VideoGenerator:
                     
                     if video_file.exists() and video_file.stat().st_size > 0:
                         cached_videos.append({
-                            'video_path': f"cache/{cache_key}.mp4",
+                            'video_path': f"{cache_key}.mp4",  # Just filename, file serving handles cache dir
                             'script': metadata.get('script', ''),
                             'duration_seconds': metadata.get('duration', 0.0),
                             'topic': metadata.get('topic', ''),
@@ -184,6 +184,7 @@ class VideoGenerator:
         # Get cache key and directory
         # For force_regenerate (random videos), use unique key to ensure different segments
         cache_key = self._get_cache_key(topic, subtopic, concept, unique=force_regenerate)
+        # Cache directory is a sibling of output directory (both inside video_service_v2 package)
         cache_dir = Path(output_dir).parent / "cache"
         
         # Check cache first (unless forcing regeneration)

@@ -10,16 +10,23 @@ from backend.video_service_v2.services.script_service import ScriptService
 router = APIRouter()
 
 
-def _get_backend_root() -> Path:
-    """Get backend root directory."""
-    return Path(__file__).parent.parent.parent.parent
+def _get_video_service_dir() -> Path:
+    """Get video_service_v2 package directory."""
+    return Path(__file__).parent.parent
 
 
 def _get_output_dir() -> Path:
     """Get output directory for videos."""
-    output_dir = _get_backend_root() / "video_service_v2" / "output"
+    output_dir = _get_video_service_dir() / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
+
+
+def _get_cache_dir() -> Path:
+    """Get cache directory for videos."""
+    cache_dir = _get_video_service_dir() / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
 
 @router.post("/generate", response_model=VideoGenerateResponse)
@@ -97,7 +104,7 @@ async def list_cached_videos():
         List of cached video responses
     """
     try:
-        cache_dir = _get_backend_root() / "video_service_v2" / "cache"
+        cache_dir = _get_cache_dir()
         generator = VideoGenerator()
         cached_videos = generator.list_cached_videos(cache_dir)
         
@@ -137,11 +144,11 @@ async def serve_video_file(filename: str):
         File response that streams the entire file
     """
     try:
-        backend_root = _get_backend_root()
-        file_path = backend_root / "video_service_v2" / "output" / filename
+        video_service_dir = _get_video_service_dir()
+        file_path = video_service_dir / "output" / filename
         
         if not file_path.exists():
-            file_path = backend_root / "video_service_v2" / "cache" / filename
+            file_path = video_service_dir / "cache" / filename
         
         # Security: prevent directory traversal
         if ".." in filename or "/" in filename or "\\" in filename:
