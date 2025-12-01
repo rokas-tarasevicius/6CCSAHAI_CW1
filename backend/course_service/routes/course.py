@@ -28,13 +28,14 @@ from backend.shared.services.llm.pdf_summary import PDF_SUMMARY_SYSTEM_INSTRUCTI
 _json_file_lock = asyncio.Lock()
 
 
-async def generate_quiz_for_file(file_name: str, content: str, num_questions: int = 5) -> List[Dict[str, Any]]:
+async def generate_quiz_for_file(file_name:str, content:str, summary:str, num_questions: int = 5) -> List[Dict[str, Any]]:
     """Generate a quiz for a specific file content.
     
     Args:
-        file_name: Name of the file
-        content: File content
-        num_questions: Number of questions to generate
+        file_name (str): Name of the file
+        content (str): The text content of the file.
+        summary (str): A summary of the contents of the file.
+        num_questions (int): The number of questions to generate.
         
     Returns:
         List of generated questions
@@ -51,18 +52,18 @@ async def generate_quiz_for_file(file_name: str, content: str, num_questions: in
         content_preview = content[:5000] if len(content) > 5000 else content
         
         concept = Concept(
-            name=topic_name,
+            name=topic_name, # TODO: Need to generate concept name
             description=f"Key concepts from {file_name}",
             keywords=[]
         )
-        
-        questions = []
+
         difficulties = [DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD]
 
         from backend.quiz_service.models.question import MultipleChoiceQuestion
+        print(f"Start generating questions")
         questions:List[MultipleChoiceQuestion] = generator.generate_questions(
-            topic=topic_name,
-            subtopic="Main Content",
+            topic=topic_name, # Need to generate topic name
+            subtopic="Main Content", # TODO: Need to generate subtopic
             concept=concept,
             difficulty=difficulties[0],
             content_context=content_preview,
@@ -257,33 +258,37 @@ async def upload_pdf(file: UploadFile = File(...)):
         
         # Modify the file name back to original for saving (and display)
         parsed_data["metadata"]["file_name"] = original_file_name
+        file_contents = parsed_data["content"]
 
-        # Generate quiz and summary in parallel for faster processing
-        print(f"Generating quiz and summary for {original_file_name}...")
+        # Generate summary first (quiz generation requires summary parameter)
+        print(f"Generating summary for {original_file_name}...")
         pdf_summary_prompt_data = {
             "file_name": original_file_name,
-            "raw_text": parsed_data["content"],
+            "raw_text": file_contents,
             "topic": "", # TODO: Need to somehow generate a topic
             "subtopic": "" # TODO: Need to somehow generate a subtopic
         }
         
-        # Run quiz and summary generation in parallel
-        quiz_task = generate_quiz_for_file(
-            original_file_name,
-            parsed_data["content"],
-            num_questions=5
-        )
-        summary_task = generate_pdf_summary_for_file(
+        pdf_summary = await generate_pdf_summary_for_file(
             file_name=original_file_name,
             prompt_data=pdf_summary_prompt_data,
         )
         
-        # Wait for both to complete in parallel
-        quiz_questions, pdf_summary = await asyncio.gather(quiz_task, summary_task)
-        
-        # Add quiz and summary to parsed data
-        parsed_data["quiz"] = quiz_questions
+        # Add summary to parsed data
         parsed_data["summary"] = pdf_summary
+        
+        # Generate quiz after summary (quiz generation requires summary)
+        print(f"Generating quiz for {original_file_name}...")
+        num_questions = 5  # Default number of questions
+        quiz_questions = await generate_quiz_for_file(
+            file_name=original_file_name,
+            content=file_contents,
+            summary=pdf_summary,
+            num_questions=num_questions
+        )
+        
+        # Add quiz to parsed data
+        parsed_data["quiz"] = quiz_questions
         print(f"Generated {len(quiz_questions)} quiz questions and summary for {original_file_name}")
 
         # Use lock to safely write to JSON file (prevents race conditions with parallel uploads)
@@ -350,10 +355,16 @@ async def generate_quiz_for_existing_file(file_key: str, num_questions: int = 5)
         file_data = existing_data[file_key]
         file_name = file_data["metadata"]["file_name"]
         content = file_data["content"]
+        summary = file_data["summary"] 
         
         # Generate new quiz
         print(f"Regenerating quiz for {file_name}...")
-        quiz_questions = await generate_quiz_for_file(file_name, content, num_questions)
+        quiz_questions = await generate_quiz_for_file(
+            file_name=file_name,
+            content=content,
+            summary=summary,
+            num_questions=num_questions
+        )
         
         # Update the quiz in the file data
         existing_data[file_key]["quiz"] = quiz_questions

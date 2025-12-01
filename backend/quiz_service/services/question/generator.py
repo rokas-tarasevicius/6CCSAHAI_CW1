@@ -1,13 +1,22 @@
 """Question generation service using Mistral."""
 import random
-from typing import Optional
+import json
+import re
+from typing import Optional, List, Dict, Any
 from backend.quiz_service.models.question import MultipleChoiceQuestion, Answer, DifficultyLevel
 from backend.course_service.models.course import Concept
 from backend.shared.services.llm.mistral_client import MistralClient
-from backend.shared.services.llm.prompts import QUESTION_GENERATION_PROMPT, CHOICE_GENERATION_PROMPT
-from backend.shared.services.llm.mcq_prompts import KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION, ANSWER_GENERATION_SYSTEM_INSTRUCTION
+from backend.shared.services.llm.prompts import (
+    QUESTION_GENERATION_PROMPT,
+    COURSE_RELEVANCE_PROMPT,
+    CHOICE_GENERATION_PROMPT
+)
+from backend.shared.services.llm.mcq_prompts import (
+    KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION,
+    COURSE_RELEVANCE_SYSTEM_INSTRUCTION,
+    ANSWER_GENERATION_SYSTEM_INSTRUCTION,
+)
 from backend.shared.utils.config import Config
-
 
 class QuestionGenerator:
     """Generate questions using AI based on course material."""
@@ -24,6 +33,54 @@ class QuestionGenerator:
             self.client = MistralClient(max_tokens=Config.QUESTION_MAX_TOKENS)
         else:
             self.client = mistral_client
+
+    def _parse_json_response(self, response:str) -> List[Dict[Any, Any]]:
+        """
+        Tries to parse a JSON response from the LLM output.
+
+        - The expected input should be a list of dictionaries in JSON format.
+        E.g., 
+        [
+            {"question": "What is ...?", "answers": [...]},
+            {"question": "How does ...?", "answers": [...]}
+        ]
+
+        Or any arbitrary list of JSON objects.
+
+        Args:
+            response (str): Response from LLM.
+
+        Returns:
+            List[Dict[Any, Any]]: Parsed list of dictionaries.
+        """
+        # Parse the response as JSON
+        json_match = re.search(r"\[.*\]|\{.*\}", response, re.DOTALL) # List of JSON objects
+        if not json_match:
+            raise ValueError("No JSON found in response")
+
+        json_str = json_match.group(0)
+        parsed_data = json.loads(json_str)
+
+        if isinstance(parsed_data, dict): # Single question object
+            parsed_data = [parsed_data]
+        return parsed_data
+    
+    def _generate_llm_response_json(self, prompt_vars:Dict[str, Any], prompt_template:str) -> List[Dict[str, Any]]:
+        """
+        Generates a JSON response from the LLM based on the provided prompt template and variables.
+
+        Args:
+            prompt_vars (Dict[str, Any]): Variables to fill in the prompt template.
+            prompt_template (str): The prompt template to use.
+        Returns:
+            List[Dict[str, Any]]: Parsed JSON response from the LLM.
+        """
+        response = self.client.generate_with_template(
+            prompt_template,
+            **prompt_vars
+        )
+        data = self._parse_json_response(response=response)
+        return data
     
     def generate_questions(
         self,
@@ -55,12 +112,16 @@ class QuestionGenerator:
             "topic": topic,
             "subtopic": subtopic,
             "concept_name": concept.name,
-            "concept_description": concept.description,
+            "concept_description": concept.description, # Is a summary 
             "content_context": f"Additional context: {content_context}" if content_context else "",
             "difficulty": difficulty.value,
         }
         question_prompt_vars = {
             "system_instruction": KNOWLEDGE_LEVEL_MCQ_SYSTEM_INSTRUCTION,
+            **common_prompt_vars
+        }
+        question_course_relevance_prompt_vars = {
+            "system_instruction": COURSE_RELEVANCE_SYSTEM_INSTRUCTION,
             **common_prompt_vars
         }
         choice_prompt_vars = {
@@ -70,51 +131,46 @@ class QuestionGenerator:
         
         # Generate question using LLM
         try:
-            question_response = self.client.generate_with_template(
-                QUESTION_GENERATION_PROMPT,
-                **question_prompt_vars
+            question_data = self._generate_llm_response_json(
+                prompt_vars=question_prompt_vars,
+                prompt_template=QUESTION_GENERATION_PROMPT
             )
 
-            print(f"Raw question response: {question_response}")
+            print(f"Generated question data: {json.dumps(question_data, indent=4)}")
 
-            # Parse the response as JSON
-            import json
-            import re
-            json_match = re.search(r"\[.*\]|\{.*\}", question_response, re.DOTALL) # List of JSON objects
-            if not json_match:
-                raise ValueError("No JSON found in response")
+            # Check these questions for course relevance, it 
+            question_course_relevance_prompt_vars["generated_questions"] = json.dumps(question_data)
+            relevance_data = self._generate_llm_response_json(
+                prompt_vars=question_course_relevance_prompt_vars,
+                prompt_template=COURSE_RELEVANCE_PROMPT
+            )
+            print(f"Relevance data: {json.dumps(relevance_data, indent=4)}")
 
-            json_str = json_match.group(0)
-            question_data = json.loads(json_str)
+            # Filter out question stems that are not relevant to the course.
+            try:
+                relevant_questions = [
+                    q for q, r in zip(question_data, relevance_data)
+                    if r["is_relevant"]
+                ]
+                question_data = relevant_questions # Re-assign to only relevant questions
+            except Exception as e:
+                print(f"Error filtering relevant questions: {e}, proceeding with all questions")
+                raise e
 
-            if isinstance(question_data, dict): # Single question object
-                question_data = [question_data]
-
-            print(f"Generated question data: {question_data}")
-
+            # Generate answer choices for each question stem.
             choices = []
 
             for idx in range(len(question_data)):
-                choices_response = self.client.generate_with_template(
-                    CHOICE_GENERATION_PROMPT,
-                    question=question_data[idx]["question"],
-                    **choice_prompt_vars,
+                choices_data = self._generate_llm_response_json(
+                    prompt_vars={
+                        "question": question_data[idx]["question"],
+                        **choice_prompt_vars,
+                    },
+                    prompt_template=CHOICE_GENERATION_PROMPT
                 )
-                print(f"Raw choices response: {choices_response}")
-                # Parse choices response
-                if "```json" in choices_response:
-                    start = choices_response.find("```json") + 7
-                    end = choices_response.find("```", start)
-                    json_str = choices_response[start:end].strip()
-                    choices_data = json.loads(json_str)
-                elif "{" in choices_response:
-                    start = choices_response.find("{")
-                    end = choices_response.rfind("}") + 1
-                    json_str = choices_response[start:end]
-                    choices_data = json.loads(json_str)
-                else:
-                    raise ValueError("No JSON found in choices response")
                 
+                
+                choices_data = choices_data[0] # Extract the first element which contains the answers list (to convert back to a list of dicts/JSON objects)
                 print(f"Generated choices data: {choices_data}")
 
                 # Validate and create question

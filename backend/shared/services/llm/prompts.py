@@ -19,6 +19,23 @@ QUESTION_GENERATION_PROMPT = ChatPromptTemplate.from_messages([
     )
 ])
 
+COURSE_RELEVANCE_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", "{system_instruction}"),
+    ("human", 
+    """
+    {{
+    "topic": "{topic}",
+    "subtopic": "{subtopic}",
+    "concept_name": "{concept_name}",
+    "concept_description": "{concept_description}",
+    "content_context": "{content_context}",
+    "difficulty": "{difficulty}"
+    "generated_questions": {generated_questions}
+    }}
+    """
+    )
+])
+
 CHOICE_GENERATION_PROMPT = ChatPromptTemplate.from_messages([
     ("system", "{system_instruction}"),
     ("human", 
