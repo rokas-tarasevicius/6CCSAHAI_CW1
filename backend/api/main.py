@@ -1,7 +1,8 @@
 """FastAPI backend server for Adaptive Learning Platform."""
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel, field_validator
 from typing import List, Optional, Dict, Any
 from pathlib import Path
@@ -34,12 +35,25 @@ from backend.video_service_v2.services.script_service import ScriptService
 from backend.course_service.models.course import CourseStructure, Topic, Subtopic, Concept
 from backend.quiz_service.models.question import DifficultyLevel
 from backend.video_service_v2.models.video import VideoGenerateRequest, VideoGenerateResponse
+from backend.user_profile.models.profile import UserProfile, IncorrectConceptRef
+from backend.user_profile.services.profile_service import (
+    get_user_profile,
+    set_rating,
+    update_rating,
+    set_incorrect_concepts
+)
 from llama_cloud_services import LlamaParse
 
 app = FastAPI(
     title="Adaptive Learning Platform API",
     description="Backend API for AI-powered adaptive learning",
     version="1.0.0"
+)
+
+# Session middleware (must be before CORS)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET_KEY", "your-secret-key-change-in-production")
 )
 
 # CORS middleware
@@ -117,6 +131,21 @@ class QuestionResponse(BaseModel):
 class FileQuizRequest(BaseModel):
     file_paths: List[str]
     max_questions: Optional[int] = None
+
+
+class ChatbotRequest(BaseModel):
+    """Request model for chatbot queries."""
+    question: str  # student's chat message
+    quiz_question: Optional[str] = None
+    correct_answer: Optional[str] = None
+    topic: str
+    subtopic: Optional[str] = None
+    concepts: Optional[List[str]] = None
+
+
+class ChatbotResponse(BaseModel):
+    """Response model for chatbot queries."""
+    answer: str
 
 
 # ============================================================================
@@ -462,6 +491,35 @@ async def start_file_based_quiz(request: FileQuizRequest):
 
 
 # ============================================================================
+# Chatbot Routes
+# ============================================================================
+
+@app.post("/api/chatbot/ask", response_model=ChatbotResponse)
+async def ask_chatbot(request: ChatbotRequest):
+    """Answer chat questions using the current quiz question + correct answer as context."""
+    try:
+        mistral_client = MistralClient()
+
+        system_message = f"""You are a concise tutor who gives hints only.
+Use the quiz question and correct answer to craft 1-2 short hints.
+Never state the correct answer verbatim.
+Quiz question: {request.quiz_question or 'N/A'}
+Correct answer: {request.correct_answer or 'N/A'}
+Format: brief hint(s) that nudge the learner toward the answer. If unsure, say you don't have enough info."""
+
+        answer = await asyncio.to_thread(
+            mistral_client.generate,
+            prompt=request.question,
+            system_message=system_message
+        )
+
+        return ChatbotResponse(answer=answer)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate chatbot response: {str(e)}")
+
+
+# ============================================================================
 # Video Routes
 # ============================================================================
 
@@ -588,6 +646,63 @@ async def serve_video_file(filename: str):
 
 
 # ============================================================================
+# User Profile Routes
+# ============================================================================
+
+@app.get("/api/user/profile", response_model=UserProfile)
+async def get_profile(request: Request):
+    """Get user profile from session."""
+    return get_user_profile(request)
+
+
+class SetRatingRequest(BaseModel):
+    """Request model for setting user rating."""
+    rating: float
+
+
+class IncorrectConcept(BaseModel):
+    """Concept identifier for quiz mistakes."""
+    topic: str
+    subtopic: str
+    concept: str
+
+
+class IncorrectConceptsRequest(BaseModel):
+    """Request model for incorrect concepts list."""
+    incorrect_concepts: List[IncorrectConcept]
+
+
+@app.put("/api/user/profile/rating", response_model=UserProfile)
+async def set_profile_rating(request: Request, rating_request: SetRatingRequest):
+    """Set user rating in profile."""
+    if rating_request.rating < 0.0:
+        raise HTTPException(status_code=400, detail="Rating must be non-negative")
+    return set_rating(request, rating_request.rating)
+
+
+@app.patch("/api/user/profile/rating", response_model=UserProfile)
+async def update_profile_rating(request: Request, rating_request: SetRatingRequest):
+    """Update user rating in profile."""
+    if rating_request.rating < 0.0:
+        raise HTTPException(status_code=400, detail="Rating must be non-negative")
+    return update_rating(request, rating_request.rating)
+
+
+@app.post("/api/questions/complete", response_model=UserProfile)
+async def complete_quiz(request: Request, payload: IncorrectConceptsRequest):
+    """Record incorrect concepts when a quiz session ends and return updated profile."""
+    concepts = [IncorrectConceptRef(**concept.model_dump()) for concept in payload.incorrect_concepts]
+    return set_incorrect_concepts(request, concepts)
+
+
+@app.post("/api/user/profile/incorrect-concepts", response_model=UserProfile)
+async def update_incorrect_concepts(request: Request, payload: IncorrectConceptsRequest):
+    """Record concepts the user answered incorrectly in the last quiz."""
+    concepts = [IncorrectConceptRef(**concept.model_dump()) for concept in payload.incorrect_concepts]
+    return set_incorrect_concepts(request, concepts)
+
+
+# ============================================================================
 # Root Routes
 # ============================================================================
 
@@ -607,5 +722,3 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-

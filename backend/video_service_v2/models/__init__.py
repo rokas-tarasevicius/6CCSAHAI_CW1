@@ -3,3 +3,5 @@ from backend.video_service_v2.models.video import VideoGenerateRequest, VideoGen
 
 __all__ = ["VideoGenerateRequest", "VideoGenerateResponse"]
 
+
+

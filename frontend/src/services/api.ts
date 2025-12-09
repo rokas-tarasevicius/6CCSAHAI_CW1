@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Question, VideoRecommendation, VideoContent, ParsedDataResponse } from '../types'
+import type { Question, VideoContent, ParsedDataResponse } from '../types'
 
 const API_BASE_URL = '/api'
 
@@ -121,6 +121,58 @@ export const videosApi = {
   
   getCachedVideos: async (): Promise<VideoContent[]> => {
     const response = await api.get<VideoContent[]>('/videos/cached')
+    return response.data
+  },
+}
+
+export interface IncorrectConceptRef {
+  topic: string
+  subtopic: string
+  concept: string
+}
+
+export interface UserProfile {
+  rating: number
+  incorrect_concepts: IncorrectConceptRef[]
+}
+
+export const userProfileApi = {
+  getProfile: async (): Promise<UserProfile> => {
+    const response = await api.get<UserProfile>('/user/profile')
+    return response.data
+  },
+  
+  updateRating: async (rating: number): Promise<UserProfile> => {
+    const response = await api.patch<UserProfile>('/user/profile/rating', { rating })
+    return response.data
+  },
+}
+
+export const quizProgressApi = {
+  completeQuiz: async (incorrectConcepts: IncorrectConceptRef[]): Promise<UserProfile> => {
+    const response = await api.post<UserProfile>('/questions/complete', {
+      incorrect_concepts: incorrectConcepts,
+    })
+    return response.data
+  },
+}
+
+export interface ChatbotRequest {
+  question: string
+  quiz_question?: string
+  correct_answer?: string
+  topic: string
+  subtopic?: string
+  concepts?: string[]
+}
+
+export interface ChatbotResponse {
+  answer: string
+}
+
+export const chatbotApi = {
+  ask: async (request: ChatbotRequest): Promise<ChatbotResponse> => {
+    const response = await api.post<ChatbotResponse>('/chatbot/ask', request)
     return response.data
   },
 }

@@ -89,7 +89,7 @@ Concepts: {concepts}
 
 Previous explanation given: {explanation}
 
-Answer the student's follow-up question clearly and concisely. Use the concept context to provide accurate information.
+Answer the student's follow-up question clearly and concisely. Use the concept context to provide accurate information. Do not directly answer the question, but rather provide a hint or a pointer in the right direction.
 Keep your response focused and educational."""),
     ("human", "{student_question}")
 ])

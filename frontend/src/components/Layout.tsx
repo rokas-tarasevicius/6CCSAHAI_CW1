@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useRating } from '../contexts/RatingContext'
 import './Layout.css'
 
 interface LayoutProps {
@@ -7,6 +8,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const { rating } = useRating()
 
   return (
     <div className="layout">
@@ -33,6 +35,13 @@ export default function Layout({ children }: LayoutProps) {
               className={location.pathname === '/videos' ? 'active' : ''}
             >
               AI slop
+            </Link>
+            <Link
+              to="/profile"
+              className={location.pathname === '/profile' ? 'active' : ''}
+            >
+              Profile
+              <span className="navbar-rating">{Math.round(rating)}</span>
             </Link>
           </div>
         </div>

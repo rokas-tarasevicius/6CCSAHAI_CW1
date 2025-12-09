@@ -1,19 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { questionsApi } from '../services/api'
+import { questionsApi, quizProgressApi, type IncorrectConceptRef } from '../services/api'
 import type { Question } from '../types'
 import QuestionCard from '../components/QuestionCard'
+import TopicChatbot from '../components/TopicChatbot'
+import { useRating } from '../contexts/RatingContext'
 import './QuizPage.css'
 
 export default function QuizPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { updateRating } = useRating()
   const [hasContent, setHasContent] = useState<boolean | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [incorrectConcepts, setIncorrectConcepts] = useState<IncorrectConceptRef[]>([])
+  const [isCompleted, setIsCompleted] = useState(false)
   
   // File-based quiz state
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
@@ -68,7 +73,7 @@ export default function QuizPage() {
     } else {
       // Quiz completed - show completion screen
       setQuestion(null)
-      setHasContent(null) // This will trigger a completion screen
+      setIsCompleted(true)
     }
   }, [currentQuestionIndex, allQuestions])
 
@@ -80,6 +85,28 @@ export default function QuizPage() {
 
   const handleSubmit = async () => {
     if (selectedAnswer === null || !question) return
+    
+    // Check if answer is correct
+    const selectedAnswerObj = question.answers[selectedAnswer]
+    const isCorrect = selectedAnswerObj?.is_correct || false
+    const concept = question.concepts?.[0]
+    
+    // Update rating based on correctness
+    if (isCorrect) {
+      await updateRating(10) // +10 for correct answer
+    } else {
+      await updateRating(-5) // -5 for incorrect answer
+      if (concept) {
+        setIncorrectConcepts((prev) => {
+          const exists = prev.some(
+            (c) => c.topic === question.topic && c.subtopic === question.subtopic && c.concept === concept
+          )
+          if (exists) return prev
+          return [...prev, { topic: question.topic, subtopic: question.subtopic, concept }]
+        })
+      }
+    }
+    
     setIsAnswered(true)
   }
 
@@ -88,13 +115,19 @@ export default function QuizPage() {
     const isLastQuestion = currentQuestionIndex >= allQuestions.length - 1
     
     if (isLastQuestion) {
-      // Navigate directly to dashboard on quiz completion
-      navigate('/')
+      try {
+        await quizProgressApi.completeQuiz(incorrectConcepts)
+      } catch (err) {
+        console.error('Failed to store incorrect concepts', err)
+      }
+      // Show completion screen instead of redirecting immediately
+      setQuestion(null)
+      setIsCompleted(true)
     } else {
       // Load next question
       loadNextFileBasedQuestion()
     }
-  }, [currentQuestionIndex, allQuestions.length, navigate, loadNextFileBasedQuestion])
+  }, [currentQuestionIndex, allQuestions.length, loadNextFileBasedQuestion, incorrectConcepts])
 
   // Auto-advance to next question after 3 seconds when answered
   useEffect(() => {
@@ -125,6 +158,39 @@ export default function QuizPage() {
     )
   }
 
+  if (isCompleted) {
+    return (
+      <div className="quiz-page">
+        <div className="quiz-completed">
+          <h2>Quiz Completed! 🎉</h2>
+          <p>You've successfully completed the quiz with {allQuestions.length} questions.</p>
+          <div className="incorrect-concepts">
+            <h3>Concepts to review</h3>
+            {incorrectConcepts.length === 0 ? (
+              <p>Great job! No incorrect concepts this time.</p>
+            ) : (
+              <ul>
+                {incorrectConcepts.map((c) => (
+                  <li key={`${c.topic}-${c.subtopic}-${c.concept}`}>
+                    <strong>{c.concept}</strong> — {c.topic} / {c.subtopic}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="completion-actions">
+            <Link to="/courses" className="btn-primary">
+              Back to Courses
+            </Link>
+            <Link to="/" className="btn-secondary">
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading || hasContent === null) {
     return (
       <div className="quiz-page">
@@ -144,28 +210,7 @@ export default function QuizPage() {
     )
   }
 
-  if (!question) {
-    if (allQuestions.length > 0) {
-      // Show completion screen for file-based quiz
-      return (
-        <div className="quiz-page">
-          <div className="quiz-completed">
-            <h2>Quiz Completed! 🎉</h2>
-            <p>You've successfully completed the quiz with {allQuestions.length} questions.</p>
-            <div className="completion-actions">
-              <Link to="/courses" className="btn-primary">
-                Back to Courses
-              </Link>
-              <Link to="/" className="btn-secondary">
-                Go to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
+  if (!question) return null
 
   return (
     <div className="quiz-page">
@@ -200,6 +245,10 @@ export default function QuizPage() {
               isLastQuestion={currentQuestionIndex >= allQuestions.length - 1}
             />
           </div>
+        </div>
+        
+        <div className="quiz-right-pane">
+          <TopicChatbot question={question} />
         </div>
       </div>
     </div>

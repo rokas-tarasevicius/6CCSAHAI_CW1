@@ -64,6 +64,12 @@
   opacity: 0.8;
 }
 
+.navbar-rating {
+  margin-left: var(--spacing-10);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-blue);
+}
+
 .main-content {
   flex: 1;
   padding: var(--content-padding-y) var(--content-padding-x);

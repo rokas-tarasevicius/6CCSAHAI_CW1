@@ -60,6 +60,12 @@
   flex: 1;
 }
 
+.quiz-right-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 633px;
+}
+
 .quiz-left-pane {
   display: flex;
   flex-direction: column;
